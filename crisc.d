@@ -538,7 +538,6 @@ class Compiler {
 
 void main(string[] args)
 {
-	writeln(to!string(args));
 	if (args.length == 2) {
 		if (args[0].toLower.endsWith("criscexec")) {
 			auto processor = new CPU(cast(ubyte[])read(args[1]), 32, 512);
@@ -549,7 +548,7 @@ void main(string[] args)
 		if (args[0].toLower.endsWith("criscasm")) {
 			File output = File(args[1][0..$-3]~"bin", "w");
 			auto compiler = new Compiler();
-			output.rawWrite(compiler.compile(readText(args[2])));
+			output.rawWrite(compiler.compile(readText(args[1])));
 			compiler.printLabels();
 			output.close();
 		}

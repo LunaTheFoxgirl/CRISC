@@ -27,3 +27,6 @@ crisc
 criscasm
 criscexec
 -crisc.d
+
+# criscasm output
+*.bin
