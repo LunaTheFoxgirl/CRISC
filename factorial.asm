@@ -7,13 +7,6 @@ call #fact
 
 pop 0x0
 
-push 0
-push 0
-push 0
-push 0
-push 0
-push 0
-
 dbg PRT_REG 0
 
 halt
