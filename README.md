@@ -5,6 +5,13 @@ CRISC is a single-file virtual CPU and assembler for a small toy architecture I 
 
 Please don't make any serious applications with this, (neither can you, really.)
 
+## How do you get addresses from labels?
+To get the address of an label suffix it with #, for example:
+`jmpc #myJumpoint`
+
+## How do you declare variables and create strings?
+You can't yet.
+
 ## Instruction Set
 
 **Instruction**|**Input A**|**Input B**|** Description**
