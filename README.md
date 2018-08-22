@@ -12,6 +12,10 @@ To get the address of an label suffix it with #, for example:
 ## How do you declare variables and create strings?
 You can't yet.
 
+## Conditional execution
+In CRISC, to do conditional execution you first have to move the value you want to test to the status buffer (0xFF)
+then, you can compared values, const values and register values are the current supported options.
+
 ## Instruction Set
 
 **Instruction**|**Input A**|**Input B**|** Description**
