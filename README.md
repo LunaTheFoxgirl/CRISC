@@ -21,10 +21,15 @@ MULC|CONST A|REG B|Multiplies const A to register B
 DIV|REG A|REG B|Divides register A to register B
 DIVC|CONST A|REG B|Divides const A to register B
 JMP|ADDRESS A| |Jumps to address A
-JMPEQ|ADDRESS A|CONST B|Jumps to address A if B is equal to value in status register
-JMPNEQ|ADDRESS A|CONST B|Jumps to address A if B is not equal to value in status register
-JMPLEQ|ADDRESS A|CONST B|Jumps to address A if B is larger than or equal to value in status register
-JMPSEQ|ADDRESS A|CONST B|Jumps to address A if B is smallerthan or equal to value in status register
+JMPEQ|ADDRESS A|REG B|Jumps to address A if B is equal to value in status register
+JMPNEQ|ADDRESS A|REG B|Jumps to address A if B is not equal to value in status register
+JMPLEQ|ADDRESS A|REG B|Jumps to address A if B is larger than or equal to value in status register
+JMPSEQ|ADDRESS A|REG B|Jumps to address A if B is smallerthan or equal to value in status register
+JMPC|CONST ADDRESS A| |Jumps to address A
+JMPEQC|ADDRESS A|CONST B|Jumps to address A if B is equal to value in status register
+JMPNEQC|ADDRESS A|CONST B|Jumps to address A if B is not equal to value in status register
+JMPLEQC|ADDRESS A|CONST B|Jumps to address A if B is larger than or equal to value in status register
+JMPSEQC|ADDRESS A|CONST B|Jumps to address A if B is smallerthan or equal to value in status register
 LDR|REG A|ADDRESS B|Load memory from address B in to register A
 LDRC|CONST A|ADDRESS B|Load memory from const B in to register A
 STR|REG A|ADDRESS B|Store memory from register A in to address B (in memory)
