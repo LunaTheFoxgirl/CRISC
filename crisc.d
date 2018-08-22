@@ -21,8 +21,14 @@ public enum DBGOpCode : uint {
 	// PRINT the full memory.
 	PRT_FMEM = 4,
 
+	// PRINT the callstack.
+	PRT_CSTK = 5,
+
+	// PRINT the datastack.
+	PRT_DSTK = 6,
+
 	// SET verbose logging output
-	SET_VEB = 5
+	SET_VEB = 7
 }
 
 public enum OpCode : ubyte {
@@ -135,26 +141,48 @@ struct CPUStack {
 	}
 
 	public {
+		void clearStack() {
+			stackoffset = 0;
+			while (stackoffset < size) {
+				stackpointer_t[stackoffset] = 0;
+				stackoffset++;
+			}
+			stackoffset = 0;
+		}
+
 		ubyte* stackpointer() {
 			return stackptr+stackoffset;
 		}
 
+		size_t* stackpointer_t() {
+			return (cast(size_t*)stackptr)+stackoffset;
+		}
+
 		void push(size_t item) {
-			checkBounds(size_t.sizeof);
-			*((cast(size_t*)stackptr+stackoffset)) = item;
-			stackoffset += size_t.sizeof;
+			checkBounds(1);
+			*((cast(size_t*)stackpointer_t)) = item;
+			stackoffset += 1;
 		}
 
 		size_t pop() {
-			checkBounds(-size_t.sizeof);
-			stackoffset -= size_t.sizeof;
-			size_t item = *((cast(size_t*)stackptr+stackoffset));
+			checkBounds(-1);
+			stackoffset -= 1;
+			size_t item = *((cast(size_t*)stackpointer_t));
 			return item;
 		}
 
 		void checkBounds(long offset) {
-			if (stackoffset+offset < 0) throw new Exception("Stack underflow");
-			if (stackoffset+offset > size_t.sizeof*size) throw new Exception("Stack overflow");
+			if (offset < 0) {
+				if (stackoffset-offset < 0)
+					throw new Exception("Stack underflow");
+			} else {
+				if (stackoffset+offset > size)
+					throw new Exception("Stack overflow!\nStack:\n"~stackStr);
+			}
+		}
+
+		string stackStr() {
+			return to!string((stackpointer_t-stackoffset)[0..size]) ~ "; OFFSET=" ~ to!string(stackoffset);
 		}
 	}
 }
@@ -186,17 +214,21 @@ class CPU {
     }
    
 
-    this(ubyte[] program, size_t memorySize) {
+    this(ubyte[] program, size_t stackSize, size_t memorySize) {
 		STATUS_REG = &REGISTERS[255];
 		memory = program;
+		memory.length += stackSize;
 		memory.length += memorySize;
 
 		// Set stack pointer.
-		CPUStack cstack = { size:25, stackptr:memory.ptr+program.length, stackoffset:0 };
+		CPUStack cstack = { size:stackSize, stackptr:memory.ptr+program.length, stackoffset:0 };
 		callstack = cstack;
 
-		CPUStack dstack = { size:25, stackptr:memory.ptr+program.length+(size_t.sizeof*25), stackoffset:0 };
+		CPUStack dstack = { size:stackSize, stackptr:(memory.ptr+program.length)+(size_t.sizeof*25), stackoffset:0 };
 		datastack = dstack;
+
+		callstack.clearStack();
+		datastack.clearStack();
 
 		progstart = cast(Instruction*)memory.ptr;
 		progptr = progstart;
@@ -319,6 +351,8 @@ class CPU {
             	if (progptr.data[0] == DBGOpCode.PRT_CTR) writeln("PROG_CTR=", progptr);
             	if (progptr.data[0] == DBGOpCode.PRT_CYC) writeln("CYCLES=", cOps);
             	if (progptr.data[0] == DBGOpCode.PRT_WMEM) writeln("MEMORY MAP=", to!string(memory));
+            	if (progptr.data[0] == DBGOpCode.PRT_DSTK) writeln("DATASTACK=", datastack.stackStr);
+            	if (progptr.data[0] == DBGOpCode.PRT_CSTK) writeln("CALLSTACK", callstack.stackStr);
 				if (progptr.data[0] == DBGOpCode.SET_VEB) VEB = cast(bool)progptr.data[1];
             	break;
             case(OpCode.CALL):
@@ -338,7 +372,7 @@ class CPU {
             	break;
             case(OpCode.PUSHR):
            		datastack.push(REGISTERS[progptr.data[0]]);
-            	if (VEB) writeln("PUSHR ", progptr.data[0]);
+            	if (VEB) writeln("PUSHR ", REGISTERS[progptr.data[0]]);
             	break;
             case(OpCode.POP):
            		REGISTERS[progptr.data[0]] = datastack.pop();
@@ -506,7 +540,7 @@ void main(string[] args)
 {
 	if (args.length > 2) {
 		if (args[1] == "--simulate" || args[1] == "-s") {
-			auto processor = new CPU(cast(ubyte[])read(args[2]), 512);
+			auto processor = new CPU(cast(ubyte[])read(args[2]), 32, 512);
 			while (processor.running) {
 				processor.runCycle();   
 			}
