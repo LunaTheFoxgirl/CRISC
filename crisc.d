@@ -337,23 +337,23 @@ class CPU {
             case(OpCode.JMPEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
 
- 	            if (*STATUS_REG == progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
-            	if (VEB) writeln("JMPEQ ", (progptr.data[0]), " ", progptr.data[1]);
+ 	            if (*STATUS_REG == REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
             	break;
             case(OpCode.JMPNEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG != progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
-            	if (VEB) writeln("JMPNEQ ", (progptr.data[0]), " ", progptr.data[1]);
+ 	            if (*STATUS_REG != REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPNEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
             	break;
             case(OpCode.JMPLEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG >= progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
-            	if (VEB) writeln("JMPLEQ ", (progptr.data[0]), " ", progptr.data[1]);
+ 	            if (*STATUS_REG >= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPLEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
             	break;
             case(OpCode.JMPSEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG <= progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
-            	if (VEB) writeln("JMPSEQ ", (progptr.data[0]), " ", progptr.data[1]);
+ 	            if (*STATUS_REG <= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPSEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
             	break;
             case(OpCode.JMPC):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
@@ -511,7 +511,7 @@ class Compiler {
 							if (!keywords[i+r].startsWith("@")) {
 								if (opCode == OpCode.POP) throw new Exception("Invalid operation, \""~kw~"\" [arg a] takes an register, not a constant!");
 								// Handle references.
-								kw ~= "c";
+								kw ~= "C";
 							}
 							if (!kw.toUpper.startsWith("JMP")) {
 								if (opCode != OpCode.POP && opCode != OpCode.JMP && opCode != OpCode.PUSH) {
@@ -549,7 +549,6 @@ class Compiler {
 						}
 						
 					}
-
 					Instruction instr = { opCode, [argA, argB] };
 					code ~= instr;
 					instr_pos++;

@@ -1,0 +1,15 @@
+dbg SET_VEB 1
+mov 32 @0x1
+mov 1 @0x0
+
+add_loop:
+	add 1 @0x0
+	mov @0x1 @0xFF
+	dbg PRT_REG @0x0
+
+jmpleq #add_loop @0x0
+
+dbg PRT_REG @0x0
+dbg PRT_REG @0xFF
+
+halt
