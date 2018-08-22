@@ -119,7 +119,7 @@ public enum OpCode : ubyte {
 	PUSH = 27,
 
     // PUSH value to stack
-	PUSHR = 28,
+	PUSHC = 28,
 	
 	// POP value from stack
 	POP = 29,
@@ -370,12 +370,12 @@ class CPU {
             	progptr = progstart+tptr-1;
             	if (VEB) writeln("RET ", tptr);
             	break;
-            case(OpCode.PUSH):
+            case(OpCode.PUSHC):
            		datastack.push(progptr.data[0]);
             	if (VEB) writeln("PUSH ", progptr.data[0]);
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	break;
-            case(OpCode.PUSHR):
+            case(OpCode.PUSH):
            		datastack.push(REGISTERS[progptr.data[0]]);
             	if (VEB) writeln("PUSHR ", REGISTERS[progptr.data[0]]);
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
