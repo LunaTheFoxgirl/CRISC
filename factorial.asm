@@ -1,5 +1,6 @@
 ; Set verbose debugging
-dbg SET_VEB 1
+dbg SET_VEB 0
+dbg SET_VSTK 1
 
 ; Push 3 to the stack (origin value)
 push 3
@@ -19,34 +20,36 @@ fact:
 	; pop off stack, to 0xFF register
 	pop 0xFF
 
-	; push it back on to the stack for the later unwinding
-	pushr 0xFF
-
 	; Jump to factorial recursing if i >= 1
 	jmpleq #factiter 1
+
+		push 1
+
 		; return with unwound stack.
-		dbg PRT_REG 0xFF
 		ret
 	
 	factiter:
-
+		; push it back on to the stack for the later unwinding
+		pushr 0xFF
+	
 		; subtract 1 from N
 		subc 1 0xFF
-		dbg PRT_REG 0xFF
 
 		; push to stack and recurse.
 		pushr 0xFF
 		call #fact
 
+		; Print stack (debugging)
 		; pop back to 0x00 and 0x01 register
-		pop 0xFF
+		pop 0x00
 		pop 0x01
-		dbg PRT_REG 0x01
-		dbg PRT_REG 0xFF
 
 		; multiply N by last factorial
 		mul 0x01 0x00
+		dbg PRT_REG 0x0
+		dbg PRT_REG 0x1
 
 		; push to stack and return.
+		pushr 0xFF
 		pushr 0x00
 		ret

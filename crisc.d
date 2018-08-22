@@ -28,7 +28,10 @@ public enum DBGOpCode : uint {
 	PRT_DSTK = 6,
 
 	// SET verbose logging output
-	SET_VEB = 7
+	SET_VEB = 7,
+
+	// SET verbose logging for data stack operations.
+	SET_VSTK = 8,
 }
 
 public enum OpCode : ubyte {
@@ -173,8 +176,7 @@ struct CPUStack {
 
 		void checkBounds(long offset) {
 			if (offset < 0) {
-				if (stackoffset-offset < 0)
-					throw new Exception("Stack underflow");
+				if (stackoffset == 0 || stackoffset-offset < 0) throw new Exception("Stack underflow");
 			} else {
 				if (stackoffset+offset > size)
 					throw new Exception("Stack overflow!\nStack:\n"~stackStr);
@@ -208,6 +210,7 @@ class CPU {
 	ulong stackStoreSize;
 	
 	bool VEB = false;
+	bool SVEB = false;
     
     bool running() {
         return (progptr !is null);
@@ -224,7 +227,7 @@ class CPU {
 		CPUStack cstack = { size:stackSize, stackptr:memory.ptr+program.length, stackoffset:0 };
 		callstack = cstack;
 
-		CPUStack dstack = { size:stackSize, stackptr:(memory.ptr+program.length)+(size_t.sizeof*25), stackoffset:0 };
+		CPUStack dstack = { size:stackSize, stackptr:(memory.ptr+program.length)+(size_t.sizeof*stackSize), stackoffset:0 };
 		datastack = dstack;
 
 		callstack.clearStack();
@@ -354,6 +357,7 @@ class CPU {
             	if (progptr.data[0] == DBGOpCode.PRT_DSTK) writeln("DATASTACK=", datastack.stackStr);
             	if (progptr.data[0] == DBGOpCode.PRT_CSTK) writeln("CALLSTACK", callstack.stackStr);
 				if (progptr.data[0] == DBGOpCode.SET_VEB) VEB = cast(bool)progptr.data[1];
+				if (progptr.data[0] == DBGOpCode.SET_VSTK) SVEB = cast(bool)progptr.data[1];
             	break;
             case(OpCode.CALL):
 				if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
@@ -369,14 +373,17 @@ class CPU {
             case(OpCode.PUSH):
            		datastack.push(progptr.data[0]);
             	if (VEB) writeln("PUSH ", progptr.data[0]);
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	break;
             case(OpCode.PUSHR):
            		datastack.push(REGISTERS[progptr.data[0]]);
             	if (VEB) writeln("PUSHR ", REGISTERS[progptr.data[0]]);
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	break;
             case(OpCode.POP):
            		REGISTERS[progptr.data[0]] = datastack.pop();
             	if (VEB) writeln("POP ", progptr.data[0]);
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	break;
             case(OpCode.HALT):
            		writeln("PROGRAM HALTED.");
