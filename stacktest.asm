@@ -4,7 +4,7 @@ movc 1 0xFF
 multLoop:
 	mulc 2 0x00
 	addc 1 0xFF
-	pushr 0x00
+	push 0x00
 jmpseq #multLoop 26
 
 ; print the call stack

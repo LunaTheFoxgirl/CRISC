@@ -2,7 +2,7 @@
 dbg SET_VSTK 0
 
 ; Call factorial function with value 10
-push 10
+pushc 10
 call #fact
 
 ; print output and halt.
@@ -18,13 +18,13 @@ fact:
 	mov 0xFF 0x1
 
 	; jump to fact_iter if status register is larger than or equal to 1
-	jmpleq #fact_iter 1
+	jmpleqc #fact_iter 1
 
 		; print callstack
 		dbg PRT_CSTK 0
 
 		; push 1 value
-		push 1
+		pushc 1
 
 		; return
 		ret
@@ -35,8 +35,8 @@ fact:
 		subc 1 0x1
 
 		; push N and N-1 to stack
-		pushr 0xFF
-		pushr 0x1
+		push 0xFF
+		push 0x1
 
 		; recurse
 		call #fact
@@ -51,5 +51,5 @@ fact:
 		mul 0x0 0xFF
 
 		; return
-		pushr 0xFF
+		push 0xFF
 		ret

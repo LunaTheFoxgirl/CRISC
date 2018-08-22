@@ -82,53 +82,65 @@ public enum OpCode : ubyte {
     // Divide REG (Referenced by CONST) A to REG B
     DIVR = 15,
 
-    // JUMP TO CONST A
+    // JUMP TO ADDRESS A
 	JMP = 16,
-	
-    // JUMP TO REG (Referenced by CONST) A
-	JMPR = 17,
+
+    // JUMP TO CONST A
+	JMPC = 17,
     
-    // JUMP TO CONST A IF STATUS register is NOT EQUAL to CONST
+    // JUMP TO ADDRESS A IF STATUS register is NOT EQUAL to CONST
 	JMPNEQ = 18,
     
-    // JUMP TO CONST A IF STATUS register is EQUAL to CONST
+    // JUMP TO ADDRESS A IF STATUS register is EQUAL to CONST
 	JMPEQ = 19,
     
-    // JUMP TO CONST A IF STATUS register is EQUAL or LARGER than CONST B
+    // JUMP TO ADDRESS A IF STATUS register is EQUAL or LARGER than CONST B
 	JMPLEQ = 20,
     
-    // JUMP TO CONST A IF STATUS register is EQUAL or SMALLER than CONST B
+    // JUMP TO ADDRESS A IF STATUS register is EQUAL or SMALLER than CONST B
     JMPSEQ = 21,
     
+    // JUMP TO CONST A IF STATUS register is NOT EQUAL to CONST
+	JMPNEQC = 22,
+    
+    // JUMP TO CONST A IF STATUS register is EQUAL to CONST
+	JMPEQC = 23,
+    
+    // JUMP TO CONST A IF STATUS register is EQUAL or LARGER than CONST B
+	JMPLEQC = 24,
+    
+    // JUMP TO CONST A IF STATUS register is EQUAL or SMALLER than CONST B
+    JMPSEQC = 25,
+    
 	// LOAD VALUE to REG A from (Referenced by CONST) MEMORY ADDRESS B
-	LD = 22,
+	LD = 26,
 
 	// LOAD VALUE TO REG A from (Referenced by CONST) MEMORY ADDRESS B
-	LDR = 23,
+	LDR = 27,
 
 	// STORE VALUE from REG A to (Referenced by CONST) MEMORY ADDRESS B
-	ST = 24,
+	ST = 28,
 
 	// STORE VALUE OF REG A to (Referenced by CONST) MEMORY ADDRESS B
-	STR = 25,
+	STR = 29,
 	
 	// CALL jump to address referenced by CONST A and set stack return pointer
-	CALL = 26,
+	CALL = 30,
 	
     // PUSH value to stack
-	PUSH = 27,
+	PUSH = 31,
 
     // PUSH value to stack
-	PUSHC = 28,
+	PUSHC = 32,
 	
 	// POP value from stack
-	POP = 29,
+	POP = 33,
 	
 	// RETURN returns to the last stack pointer with values
-    RET = 30,
+    RET = 34,
 	
 	// DBG debugging functionality
-	DBG = 31
+	DBG = 35
 }
 
 struct Instruction {
@@ -319,35 +331,56 @@ class CPU {
             case(OpCode.JMP):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
  	            
-            	progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMP ", progstart+(progptr.data[0]));
-            	break;
-            case(OpCode.JMPR):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            
             	progptr = progstart+(REGISTERS[progptr.data[0]])-1;
-            	if (VEB) writeln("JMPR ", (progptr.data[0]));
+            	if (VEB) writeln("JMP ", (progptr.data[0]));
             	break;
             case(OpCode.JMPEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
 
- 	            if (*STATUS_REG == progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+ 	            if (*STATUS_REG == progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
             	if (VEB) writeln("JMPEQ ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
             case(OpCode.JMPNEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG != progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+ 	            if (*STATUS_REG != progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
             	if (VEB) writeln("JMPNEQ ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
             case(OpCode.JMPLEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG >= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+ 	            if (*STATUS_REG >= progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
             	if (VEB) writeln("JMPLEQ ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
             case(OpCode.JMPSEQ):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG <= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+ 	            if (*STATUS_REG <= progptr.data[1]) progptr = progstart+(REGISTERS[progptr.data[0]])-1;
             	if (VEB) writeln("JMPSEQ ", (progptr.data[0]), " ", progptr.data[1]);
+            	break;
+            case(OpCode.JMPC):
+            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
+ 	            
+            	progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPC ", progstart+(progptr.data[0]));
+            	break;
+            case(OpCode.JMPEQC):
+            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
+
+ 	            if (*STATUS_REG == progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPEQC ", (progptr.data[0]), " ", progptr.data[1]);
+            	break;
+            case(OpCode.JMPNEQC):
+            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
+ 	            if (*STATUS_REG != progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPNEQC ", (progptr.data[0]), " ", progptr.data[1]);
+            	break;
+            case(OpCode.JMPLEQC):
+            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
+ 	            if (*STATUS_REG >= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPLEQC ", (progptr.data[0]), " ", progptr.data[1]);
+            	break;
+            case(OpCode.JMPSEQC):
+            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
+ 	            if (*STATUS_REG <= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+            	if (VEB) writeln("JMPSEQC ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
 			case(OpCode.DBG):
             	if (progptr.data[0] == DBGOpCode.PRT_REG) writeln("REG_", progptr.data[1], "=", REGISTERS[progptr.data[1]]);
@@ -478,7 +511,7 @@ class Compiler {
 						// Iterate
 						i++;
 						
-						if (opCode != OpCode.CALL && opCode != OpCode.PUSH && opCode != OpCode.PUSHR && opCode != OpCode.POP && opCode != OpCode.JMP && opCode != OpCode.JMPR) {
+						if (opCode != OpCode.CALL && opCode != OpCode.PUSH && opCode != OpCode.PUSHC && opCode != OpCode.POP && opCode != OpCode.JMP && opCode != OpCode.JMPC) {
 							argB = getVal(labels, 1, argBStr);
 
 							// Iterate
