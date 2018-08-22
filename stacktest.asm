@@ -1,10 +1,10 @@
 
-movc 1 0x00
-movc 1 0xFF
+mov 1 @0x00
+mov 1 @0xFF
 multLoop:
-	mulc 2 0x00
-	addc 1 0xFF
-	push 0x00
+	mul 2 @0x00
+	add 1 @0xFF
+	push @0x00
 jmpseq #multLoop 26
 
 ; print the call stack
