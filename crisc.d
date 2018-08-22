@@ -100,17 +100,17 @@ public enum OpCode : ubyte {
     // JUMP TO CONST A IF STATUS register is EQUAL or SMALLER than CONST B
     JMPSEQ = 21,
     
-	// STORE VALUE from REG A to (Referenced by CONST) MEMORY ADDRESS B
-	ST = 22,
-	
 	// LOAD VALUE to REG A from (Referenced by CONST) MEMORY ADDRESS B
-	LD = 23,
-	    
-	// STORE VALUE OF REG A to (Referenced by CONST) MEMORY ADDRESS B
-	STR = 24,
-	
+	LD = 22,
+
 	// LOAD VALUE TO REG A from (Referenced by CONST) MEMORY ADDRESS B
-	LDR = 25,
+	LDR = 23,
+
+	// STORE VALUE from REG A to (Referenced by CONST) MEMORY ADDRESS B
+	ST = 24,
+
+	// STORE VALUE OF REG A to (Referenced by CONST) MEMORY ADDRESS B
+	STR = 25,
 	
 	// CALL jump to address referenced by CONST A and set stack return pointer
 	CALL = 26,
@@ -384,6 +384,22 @@ class CPU {
            		REGISTERS[progptr.data[0]] = datastack.pop();
             	if (VEB) writeln("POP ", progptr.data[0]);
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
+				break;
+            case(OpCode.LD):
+           		REGISTERS[progptr.data[0]] = memory[progptr.data[1]];
+            	if (VEB) writeln("LD ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+			case(OpCode.LDR):
+           		REGISTERS[progptr.data[0]] = memory[REGISTERS[progptr.data[1]]];
+            	if (VEB) writeln("LDR ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+            case(OpCode.ST):
+           		*(cast(size_t*)memory[progptr.data[0]]) = progptr.data[1];
+            	if (VEB) writeln("ST ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+			case(OpCode.STR):
+				*(cast(size_t*)memory[REGISTERS[progptr.data[0]]]) = REGISTERS[progptr.data[1]];
+            	if (VEB) writeln("STR ", progptr.data[0], " ", progptr.data[1]);
             	break;
             case(OpCode.HALT):
            		writeln("PROGRAM HALTED.");

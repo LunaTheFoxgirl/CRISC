@@ -1,14 +1,13 @@
 ; Set debugging for datastack
 dbg SET_VSTK 0
 
-; Call factorial function with value 3
-push 3
+; Call factorial function with value 10
+push 10
 call #fact
 
+; print output and halt.
 pop 0x0
-
 dbg PRT_REG 0
-
 halt
 
 fact:
@@ -20,6 +19,9 @@ fact:
 
 	; jump to fact_iter if status register is larger than or equal to 1
 	jmpleq #fact_iter 1
+
+		; print callstack
+		dbg PRT_CSTK 0
 
 		; push 1 value
 		push 1
@@ -45,6 +47,9 @@ fact:
 		; pop N
 		pop 0xFF
 		
+		; multiply N with factorial(N-1) result
 		mul 0x0 0xFF
+
+		; return
 		pushr 0xFF
-		ret		
+		ret
