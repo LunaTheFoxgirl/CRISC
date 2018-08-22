@@ -463,6 +463,11 @@ class Compiler {
 	private LabelRef[] labelRefs;
 	private Instruction[] code;
 	private Label[] labels;
+	private bool doInfer;
+
+	public this(bool infer) {
+		this.doInfer = infer;
+	}
 
 	public ubyte[] compile(string asmCode) {
 		// Process lines in program, removing/ignoring comments.
@@ -480,6 +485,7 @@ class Compiler {
 			}
 		}
 		
+
 		// Convert text/asm to instructions.
 		bool parsingCompleted = false;
 		int i = 0;
@@ -491,8 +497,32 @@ class Compiler {
 					Label l = { keywords[i][0..$-1], instr_pos };
 					labels ~= l;
 				} else {
-					// Generate instructions.
+					// Preprocessing
 					OpCode opCode = getOp(keywords[i]);
+					string kw = keywords[i];
+
+					// Specifies whether the assembler should infer which instruction to use based on how the arguments are structured.
+					if (doInfer) {
+						if (opCode != OpCode.HALT && opCode != OpCode.RET && opCode != OpCode.DBG && opCode != OpCode.CALL) {
+							int r = 1;
+							if (kw.toUpper.startsWith("JMP")) {
+								r = 2;
+							}
+							if (!keywords[i+r].startsWith("@")) {
+								if (opCode == OpCode.POP) throw new Exception("Invalid operation, \""~kw~"\" [arg a] takes an register, not a constant!");
+								// Handle references.
+								kw ~= "c";
+							}
+							if (!kw.toUpper.startsWith("JMP")) {
+								if (opCode != OpCode.POP && opCode != OpCode.JMP && opCode != OpCode.PUSH) {
+									if (!keywords[i+2].startsWith("@")) throw new Exception("Invalid operation, \""~kw~"\" [arg b] takes an register, not a constant!");
+								}
+							}
+						}
+					}
+
+					// Generate instructions.
+					opCode = getOp(kw);
 
 					string argAStr = "";
 					if (i+1 < keywords.length-1) argAStr = keywords[i+1];
@@ -519,6 +549,7 @@ class Compiler {
 						}
 						
 					}
+
 					Instruction instr = { opCode, [argA, argB] };
 					code ~= instr;
 					instr_pos++;
@@ -561,14 +592,17 @@ class Compiler {
 	}
 
 	// # - Label
-	// ! - Reference
-	// * - Address
+	// @ - Reference/Register
+	// TODO: * - Address
 
 	uint getVal(Label[] labels, size_t owner_offset, string t) {
 		if (t.startsWith("#")) {
 			LabelRef r = {t[1..$], owner_offset, code.length};
 			labelRefs ~= r;
 			return 0;
+		}
+		if (t.startsWith("@")) {
+			t = t[1..$];
 		}
 		if (t.startsWith("0x")) {
 			return to!uint(t[2..$], 16);
@@ -603,7 +637,7 @@ void main(string[] args)
 		}
 		if (args[0].toLower.endsWith("criscasm")) {
 			File output = File(args[1][0..$-3]~"bin", "w");
-			auto compiler = new Compiler();
+			auto compiler = new Compiler(true);
 			output.rawWrite(compiler.compile(readText(args[1])));
 			compiler.printLabels();
 			output.close();
@@ -619,7 +653,7 @@ void main(string[] args)
 		}
 		if (args[1] == "--compile" || args[1] == "--asm" || args[1] == "-c") {
 			File output = File(args[2][0..$-3]~"bin", "w");
-			auto compiler = new Compiler();
+			auto compiler = new Compiler(true);
 			output.rawWrite(compiler.compile(readText(args[2])));
 			compiler.printLabels();
 			output.close();

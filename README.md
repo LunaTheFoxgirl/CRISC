@@ -18,6 +18,8 @@ then, you can compared values, const values and register values are the current 
 
 ## Instruction Set
 
+**DO NOTE** `criscasm` will automatically infer which mode you are going to use. So if you are working with registers, remember to suffix arguments with @ for registers/addresses.
+
 **Instruction**|**Input A**|**Input B**|** Description**
 :-----:|:-----:|:-----:|:-----:
 HALT| | |Halts the execution of the program
