@@ -54,54 +54,72 @@ public enum OpCode : ubyte {
     
     // Subtract REG (Referenced by CONST) A to REG B
     SUBR = 9,
+        
+    // Multiply REG A to REG B
+    MUL = 10,
     
+    // Multiply CONST A to REG B
+    MULC = 11,
+    
+    // Multiply REG (Referenced by CONST) A to REG B
+    MULR = 12,
+    
+    // Divide REG A to REG B
+    DIV = 13,
+    
+    // Divide CONST A to REG B
+    DIVC = 14,
+    
+    // Divide REG (Referenced by CONST) A to REG B
+    DIVR = 15,
+
     // JUMP TO CONST A
-	JMP = 10,
+	JMP = 16,
 	
     // JUMP TO REG (Referenced by CONST) A
-	JMPR = 11,
+	JMPR = 17,
     
     // JUMP TO CONST A IF STATUS register is NOT EQUAL to CONST
-	JMPNEQ = 12,
+	JMPNEQ = 18,
     
     // JUMP TO CONST A IF STATUS register is EQUAL to CONST
-	JMPEQ = 13,
+	JMPEQ = 19,
     
     // JUMP TO CONST A IF STATUS register is EQUAL or LARGER than CONST B
-	JMPLEQ = 14,
+	JMPLEQ = 20,
     
     // JUMP TO CONST A IF STATUS register is EQUAL or SMALLER than CONST B
-    JMPSEQ = 15,
+    JMPSEQ = 21,
     
 	// STORE VALUE from REG A to (Referenced by CONST) MEMORY ADDRESS B
-	ST = 16,
+	ST = 22,
 	
 	// LOAD VALUE to REG A from (Referenced by CONST) MEMORY ADDRESS B
-	LD = 17,
+	LD = 23,
 	    
 	// STORE VALUE OF REG A to (Referenced by CONST) MEMORY ADDRESS B
-	STR = 18,
+	STR = 24,
 	
 	// LOAD VALUE TO REG A from (Referenced by CONST) MEMORY ADDRESS B
-	LDR = 19,
+	LDR = 25,
 	
 	// CALL jump to address referenced by CONST A and set stack return pointer
-	CALL = 20,
+	CALL = 26,
 	
     // PUSH value to stack
-	PUSH = 21,
+	PUSH = 27,
 
     // PUSH value to stack
-	PUSHR = 22,
+	PUSHR = 28,
 	
 	// POP value from stack
-	POP = 23,
+	POP = 29,
 	
 	// RETURN returns to the last stack pointer with values
-    RET = 24,
+    RET = 30,
 	
 	// DBG debugging functionality
-	DBG = 25
+	DBG = 31
 }
 
 struct Instruction {
@@ -232,6 +250,36 @@ class CPU {
             	REGISTERS[REGISTERS[progptr.data[1]]] -= progptr.data[0];
  	            
             	if (VEB) writeln("SUBR ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+            case(OpCode.MUL):
+            	REGISTERS[progptr.data[1]] *= REGISTERS[progptr.data[0]];
+ 	            
+            	if (VEB) writeln("MUL ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+            case(OpCode.MULC):
+            	REGISTERS[progptr.data[1]] *= progptr.data[0];
+ 	            
+            	if (VEB) writeln("MULC ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+            case(OpCode.MULR):
+            	REGISTERS[REGISTERS[progptr.data[1]]] *= progptr.data[0];
+ 	            
+            	if (VEB) writeln("MULR ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+            case(OpCode.DIV):
+            	REGISTERS[progptr.data[1]] /= REGISTERS[progptr.data[0]];
+ 	            
+            	if (VEB) writeln("DIV ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+            case(OpCode.DIVC):
+            	REGISTERS[progptr.data[1]] /= progptr.data[0];
+ 	            
+            	if (VEB) writeln("DIVC ", progptr.data[0], " ", progptr.data[1]);
+            	break;
+            case(OpCode.DIVR):
+            	REGISTERS[REGISTERS[progptr.data[1]]] /= progptr.data[0];
+ 	            
+            	if (VEB) writeln("DIVR ", progptr.data[0], " ", progptr.data[1]);
             	break;
             case(OpCode.JMP):
             	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
