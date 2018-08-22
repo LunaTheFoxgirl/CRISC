@@ -538,14 +538,31 @@ class Compiler {
 
 void main(string[] args)
 {
+	writeln(to!string(args));
+	if (args.length == 2) {
+		if (args[0].toLower.endsWith("criscexec")) {
+			auto processor = new CPU(cast(ubyte[])read(args[1]), 32, 512);
+			while (processor.running) {
+				processor.runCycle();   
+			}
+		}
+		if (args[0].toLower.endsWith("criscasm")) {
+			File output = File(args[1][0..$-3]~"bin", "w");
+			auto compiler = new Compiler();
+			output.rawWrite(compiler.compile(readText(args[2])));
+			compiler.printLabels();
+			output.close();
+		}
+		return;
+	}
 	if (args.length > 2) {
-		if (args[1] == "--simulate" || args[1] == "-s") {
+		if (args[1] == "--execute" || args[1] == "-e") {
 			auto processor = new CPU(cast(ubyte[])read(args[2]), 32, 512);
 			while (processor.running) {
 				processor.runCycle();   
 			}
 		}
-		if (args[1] == "--compile" || args[1] == "-c") {
+		if (args[1] == "--compile" || args[1] == "--asm" || args[1] == "-c") {
 			File output = File(args[2][0..$-3]~"bin", "w");
 			auto compiler = new Compiler();
 			output.rawWrite(compiler.compile(readText(args[2])));
