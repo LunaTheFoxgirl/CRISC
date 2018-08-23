@@ -1,9 +1,28 @@
 # CRISC
 Clipsey's Reduced Instruction Set Computing virtual toy processor and assembler.
+
 ## What does CRISC do?
 CRISC is a single-file virtual CPU and assembler for a small toy architecture I made because i was bored.
 
 Please don't make any serious applications with this, (neither can you, really.)
+
+# Building
+
+To build CRISC, you need to have the DMD compiler installed.
+
+Run
+```
+make
+sudo make install```
+
+To build and install CRISC.
+
+# Usage
+
+To assemble an crisc assembly file, use `criscasm`, for running a crisc binary `criscexec`.
+
+
+# Notes
 
 ## How do you get addresses from labels?
 To get the address of an label suffix it with #, for example:
