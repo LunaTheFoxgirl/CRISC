@@ -493,6 +493,7 @@ class Compiler {
 		while (!parsingCompleted) {
 			try {
 				// Generate labels.
+				if (i >= keywords.length) break;
 				if (keywords[i].endsWith(":")) {
 					Label l = { keywords[i][0..$-1], instr_pos };
 					labels ~= l;
@@ -627,43 +628,59 @@ class Compiler {
 
 void main(string[] args)
 {
-	if (args.length == 2) {
-		if (args[0].toLower.endsWith("criscexec")) {
-			auto processor = new CPU(cast(ubyte[])read(args[1]), 32, 512);
-			while (processor.running) {
-				processor.runCycle();   
-			}
+	version(CPU) {
+		auto processor = new CPU(cast(ubyte[])read(args[1]), 32, 512);
+		while (processor.running) {
+			processor.runCycle();   
 		}
-		if (args[0].toLower.endsWith("criscasm")) {
-			File output = File(args[1][0..$-3]~"bin", "w");
-			auto compiler = new Compiler(true);
-			output.rawWrite(compiler.compile(readText(args[1])));
-			compiler.printLabels();
-			output.close();
+		if (args.length <= 1) {
+			writeln("Usage
+\tcriscexec <file>");
 		}
-		return;
 	}
-	if (args.length > 2) {
-		if (args[1] == "--execute" || args[1] == "-e") {
-			auto processor = new CPU(cast(ubyte[])read(args[2]), 32, 512);
-			while (processor.running) {
-				processor.runCycle();   
-			}
-		}
-		if (args[1] == "--compile" || args[1] == "--asm" || args[1] == "-c") {
-			File output = File(args[2][0..$-3]~"bin", "w");
-			auto compiler = new Compiler(true);
-			output.rawWrite(compiler.compile(readText(args[2])));
-			compiler.printLabels();
-			output.close();
-		}
-		return;
-	}
-	writeln("Usage:
-Simulate a binary CRISC file, via virtual CPU.
-crisc --simulate (file).bin
 
-Compile an CRISC Assembly file.
-crisc --compile (file).asm
-");
+	version (ASM) {
+		bool verbose = false;
+		bool link = false;
+
+		string linkTmp = "";
+		string firstFile = "";
+
+		foreach (file; args[1..$]) {
+			if (file.startsWith("-")) {
+				if (file == "--verbose" || file == "-v") {
+					verbose = true;
+				}
+				if (file == "--link" || file == "-l") {
+					link = true;
+				}
+			} else {
+				if (firstFile == "") firstFile = file;
+				if (link) {
+					linkTmp ~= "\n"~readText(file);
+				} else {
+					File output = File(file[0..$-3]~"bin", "w");
+					auto compiler = new Compiler(true);
+					output.rawWrite(compiler.compile(readText(file)));
+					if (verbose) compiler.printLabels();
+					output.close();
+				}
+			}
+		}
+
+		if (link) {
+			File output = File(firstFile[0..$-3]~"bin", "w");
+			auto compiler = new Compiler(true);
+			output.rawWrite(compiler.compile(linkTmp));
+			if (verbose) compiler.printLabels();
+			output.close();
+		}
+		if (args.length <= 1) {
+			writeln("Usage
+criscasm (flags) <files>
+Flags
+\t--verbose/-v | verbose mode
+\t--link/-l    | link asm files together (output will be named after the first file)");
+		}
+	}
 }

@@ -1,3 +1,2 @@
-dmd crisc.d
-cp crisc criscexec
-cp crisc criscasm
+dmd crisc.d -version=CPU -of=criscexec
+dmd crisc.d -version=ASM -of=criscasm

@@ -1,5 +1,5 @@
-; move 32 to register 1
-mov 32 @0x1
+; move 31 to register 1
+mov 31 @0x1
 
 ; move 0 to register 0
 mov 0 @0x0
