@@ -1,6 +1,6 @@
 DC=dmd
 
-all: asm exec
+all: asm exec cleanbuild
 
 asm:
 	$(DC) crisc.d -of=criscasm -version=ASM
@@ -11,3 +11,9 @@ exec:
 install:
 	cp criscasm /bin/criscasm
 	cp criscexec /bin/criscexec
+
+cleanbuild:
+	rm *.o
+
+clean:
+	rm criscasm criscexec
