@@ -21,17 +21,20 @@ public enum DBGOpCode : uint {
 	// PRINT the full memory.
 	PRT_FMEM = 4,
 
+	// PRINT memory range
+	PRT_MEMR = 5,
+
 	// PRINT the callstack.
-	PRT_CSTK = 5,
+	PRT_CSTK = 6,
 
 	// PRINT the datastack.
-	PRT_DSTK = 6,
+	PRT_DSTK = 7,
 
 	// SET verbose logging output
-	SET_VEB = 7,
+	SET_VEB = 8,
 
 	// SET verbose logging for data stack operations.
-	SET_VSTK = 8,
+	SET_VSTK = 9,
 }
 
 public enum OpCode : ubyte {
@@ -400,7 +403,10 @@ class CPU {
             	if (progptr.data[0] == DBGOpCode.PRT_CYC) writeln("CYCLES=", cOps);
             	if (progptr.data[0] == DBGOpCode.PRT_WMEM) writeln("MEMORY MAP=", to!string(memory));
             	if (progptr.data[0] == DBGOpCode.PRT_DSTK) writeln("DATASTACK=", datastack.stackStr);
-            	if (progptr.data[0] == DBGOpCode.PRT_CSTK) writeln("CALLSTACK", callstack.stackStr);
+            	if (progptr.data[0] == DBGOpCode.PRT_CSTK) writeln("CALLSTACK=", callstack.stackStr);
+				if (progptr.data[0] == DBGOpCode.PRT_MEMR) writeln(to!string(readMemRange(REGISTERS[253], progptr.data[1])));
+
+
 				if (progptr.data[0] == DBGOpCode.SET_VEB) VEB = cast(bool)progptr.data[1];
 				if (progptr.data[0] == DBGOpCode.SET_VSTK) SVEB = cast(bool)progptr.data[1];
             	break;
@@ -435,11 +441,11 @@ class CPU {
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
 				break;
 
-            case(OpCode.LDR):	REGISTERS[progptr.data[0]] = memory[progptr.data[1]];				break;
-			case(OpCode.LDRC):	REGISTERS[progptr.data[0]] = memory[REGISTERS[progptr.data[1]]];	break;
+            case(OpCode.LDR):	REGISTERS[progptr.data[1]] = readMem(REGISTERS[progptr.data[0]]);			break;
+			case(OpCode.LDRC):	REGISTERS[progptr.data[1]] = readMem(progptr.data[0]);	break;
 
-            case(OpCode.STR):	*cast(size_t*)(cast(ubyte*)memory+safeMemOffset+REGISTERS[progptr.data[0]]) = REGISTERS[progptr.data[1]];	break;
-			case(OpCode.STRC):	*cast(size_t*)(cast(ubyte*)memory+safeMemOffset+REGISTERS[progptr.data[0]]) = progptr.data[1];				break;
+            case(OpCode.STR):	writeMem(REGISTERS[progptr.data[1]], REGISTERS[progptr.data[0]]);				break;
+			case(OpCode.STRC):	writeMem(REGISTERS[progptr.data[1]], progptr.data[0]);							break;
 
             case(OpCode.HALT):
            		writeln("PROGRAM HALTED.");
@@ -454,6 +460,22 @@ class CPU {
         progptr++;
         cOps++;
     }
+
+	private size_t readMem(size_t address) {
+		size_t value = *cast(size_t*)(cast(ubyte*)memory+address);
+		//writeln("Reading ", value, " fom ", address);
+		return value;
+	}
+
+	private size_t[] readMemRange(size_t address, size_t length) {
+		//writeln("Reading address ", address, " to ", address+length);
+		return (cast(size_t*)((cast(ubyte*)memory+address)[0..length]))[0..length/size_t.sizeof];
+	}
+
+	private void writeMem(size_t address, size_t value) {
+		//writeln("Writing ", value, " to ", address);
+		*cast(size_t*)(cast(ubyte*)memory+address) = value;
+	}
 
 	private void debugInstr(Instruction instr) {
 		if (VEB) writeln(to!string((cast(OpCode)instr.opCode)), " ", instr.data[0], " ", instr.data[1]);
@@ -664,7 +686,7 @@ public string binToASMDESC(ubyte[] data) {
 	string oi = "";
 	int line = 0;
 	foreach(Instruction i; instructions) {
-		oi ~= to!string(line) ~ "\t" ~ to!string(i.opCode) ~ " " ~ to!string(i.data[0]) ~ " " ~ to!string(i.data[1]) ~ "\n";
+		oi ~= "\t" ~ to!string(line) ~ "\t" ~ to!string(i.opCode) ~ " " ~ to!string(i.data[0]) ~ " " ~ to!string(i.data[1]) ~ "\n";
 		line++;
 	}
 	return oi;
