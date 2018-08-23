@@ -239,6 +239,23 @@ class SysCallPrtC : SysCall {
 	}
 }
 
+import core.sys.posix.termios;
+import core.stdc.stdio;
+import std.utf;
+
+char gch() {
+	char c;
+	termios o;
+	termios n;
+	tcgetattr(0, &o);
+	n = o;
+	n.c_lflag &=(~ICANON);
+	tcsetattr(0,TCSANOW,&n);
+	c = cast(char)getchar();
+	scope(exit) tcsetattr(0,TCSANOW,&o);
+	return c;
+}
+
 class SysCallReadC : SysCall {
 
 	this() {
@@ -250,9 +267,25 @@ class SysCallReadC : SysCall {
 	}
 
 	public override void execute() {
-		char code;
-		readf("%s", &code);
+		char code = gch();
 		valueptr.push(cast(size_t)code);
+	}
+}
+
+class SysCallGetSafeMem : SysCall {
+	CPU cpu;
+
+	this() {
+		super("gsfm");
+	}
+
+	this(CPU cpu) {
+		super("gsfm", &cpu.datastack);
+		this.cpu = cpu;
+	}
+
+	public override void execute() {
+		valueptr.push(cast(size_t)cpu.safeMemOffset);
 	}
 }
 
@@ -332,7 +365,7 @@ class CPU {
 		safeMemOffset = (program.length)+((size_t.sizeof*stackSize)*2);
 
 		// Add ptrc and rdc syscalls.
-		syscalls = [new SysCallPrtC(&datastack), new SysCallReadC(&datastack)];
+		syscalls = [new SysCallPrtC(&datastack), new SysCallReadC(&datastack), new SysCallGetSafeMem(this)];
     }
     
     void runCycle() {
@@ -505,7 +538,7 @@ class Compiler {
 		this.doInfer = infer;
 
 		// Add ptrc and rdc syscalls.
-		syscalls = [new SysCallPrtC(), new SysCallReadC()];
+		syscalls = [new SysCallPrtC(), new SysCallReadC(), new SysCallGetSafeMem()];
 	}
 
 	public ubyte[] compile(string asmCode) {
