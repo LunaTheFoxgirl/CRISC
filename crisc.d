@@ -126,21 +126,24 @@ public enum OpCode : ubyte {
 	
 	// CALL jump to address referenced by CONST A and set stack return pointer
 	CALL = 30,
+
+	// CALL system level function.
+	SCALL = 31,
 	
     // PUSH value to stack
-	PUSH = 31,
+	PUSH = 32,
 
     // PUSH value to stack
-	PUSHC = 32,
+	PUSHC = 33,
 	
 	// POP value from stack
-	POP = 33,
+	POP = 34,
 	
 	// RETURN returns to the last stack pointer with values
-    RET = 34,
+    RET = 35,
 	
 	// DBG debugging functionality
-	DBG = 35
+	DBG = 36
 }
 
 struct Instruction {
@@ -188,7 +191,7 @@ struct CPUStack {
 
 		void checkBounds(long offset) {
 			if (offset < 0) {
-				if (stackoffset == 0 || stackoffset-offset < 0) throw new Exception("Stack underflow");
+				if (stackoffset == 0 || cast(long)(stackoffset)-offset < 0) throw new Exception("Stack underflow");
 			} else {
 				if (stackoffset+offset > size)
 					throw new Exception("Stack overflow!\nStack:\n"~stackStr);
@@ -201,26 +204,95 @@ struct CPUStack {
 	}
 }
 
+class SysCall {
+	public string name;
+
+	this(string name) {
+		this.name = name;
+	}
+
+	this(string name, CPUStack* valueptr) {
+		this.name = name;
+		this.valueptr = valueptr;
+	}
+
+	public CPUStack* valueptr;
+	public abstract void execute();
+}
+
+class SysCallPrtC : SysCall {
+
+	this() {
+		super("prtc");
+	}
+
+	this(CPUStack* valueptr) {
+		super("prtc", valueptr);
+	}
+
+	public override void execute() {
+		char c = cast(char)valueptr.pop();
+		write(c);
+	}
+}
+
+class SysCallReadC : SysCall {
+
+	this() {
+		super("rdc");
+	}
+
+	this(CPUStack* valueptr) {
+		super("rdc", valueptr);
+	}
+
+	public override void execute() {
+		char code;
+		readf("%s", &code);
+		valueptr.push(cast(size_t)code);
+	}
+}
+
 class CPU {
     // Program counter/program pointer.
     Instruction* progptr;
-    
+
+    // Pointer to start of program
     Instruction* progstart;
     
 	size_t progctr() {
 		return progptr-progstart;
 	}
 
+	// List of system calls (NOTE NEEDS TO BE IN SAME ORDER AS ASSEMBLED)
+	SysCall[] syscalls;
+
+	// Registers
     ulong[256] REGISTERS;
+
+	// Pointer to status register (0xFF)
 	ulong* STATUS_REG;
+
+	// Call stack
 	CPUStack callstack;
+	
+	// Data stack
 	CPUStack datastack;
+
+	// The memory in which the program resides.
     ubyte[] memory;
-    ulong maxOps = 32;
+
+	// safe memory space offset
+	size_t safeMemOffset;
+
+	// Amount of operations/instructions program has run
     ulong cOps = 0;
+
+	// Sizes for stacks
 	ulong callstackSize;
 	ulong stackStoreSize;
 	
+	// Verbose and Stack Verbose
 	bool VEB = false;
 	bool SVEB = false;
     
@@ -230,7 +302,10 @@ class CPU {
    
 
     this(ubyte[] program, size_t stackSize, size_t memorySize) {
+		// Set up status register pointer.
 		STATUS_REG = &REGISTERS[255];
+		
+		// Prepare memory.
 		memory = program;
 		memory.length += stackSize;
 		memory.length += memorySize;
@@ -239,149 +314,86 @@ class CPU {
 		CPUStack cstack = { size:stackSize, stackptr:memory.ptr+program.length, stackoffset:0 };
 		callstack = cstack;
 
+		// Set stack pointer for data.
 		CPUStack dstack = { size:stackSize, stackptr:(memory.ptr+program.length)+(size_t.sizeof*stackSize), stackoffset:0 };
 		datastack = dstack;
 
+		// Set program counter and program start pointer
+		progstart = cast(Instruction*)memory.ptr;
+		progptr = progstart;
+		
+		// Clear stacks
 		callstack.clearStack();
 		datastack.clearStack();
 
-		progstart = cast(Instruction*)memory.ptr;
-		progptr = progstart;
+		safeMemOffset = (program.length)+((size_t.sizeof*stackSize)*2);
+
+		// Add ptrc and rdc syscalls.
+		syscalls = [new SysCallPrtC(&datastack), new SysCallReadC(&datastack)];
     }
     
     void runCycle() {
         if (progptr is null) return;
         REGISTERS[254] = cast(size_t)callstack.stackpointer;
+		debugInstr(*progptr);
         switch (progptr.opCode) {
-            case(OpCode.MOV):
-                REGISTERS[progptr.data[1]] = REGISTERS[progptr.data[0]];
-            	
-            	if (VEB) writeln("MOV ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.MOVC):
-            	REGISTERS[progptr.data[1]] = progptr.data[0];
- 	            
-            	if (VEB) writeln("MOVC ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-			case(OpCode.MOVR):
-            	REGISTERS[REGISTERS[progptr.data[1]]] = progptr.data[0];
- 	            
-            	if (VEB) writeln("MOVR ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.ADD):
-            	REGISTERS[progptr.data[1]] += REGISTERS[progptr.data[0]];
- 	            
-            	if (VEB) writeln("ADD ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.ADDC):
-            	REGISTERS[progptr.data[1]] += progptr.data[0];
- 	            
-            	if (VEB) writeln("ADDC ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.ADDR):
-            	REGISTERS[REGISTERS[progptr.data[1]]] += progptr.data[0];
- 	            
-            	if (VEB) writeln("ADDR ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.SUB):
-            	REGISTERS[progptr.data[1]] -= REGISTERS[progptr.data[0]];
- 	            
-            	if (VEB) writeln("SUB ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.SUBC):
-            	REGISTERS[progptr.data[1]] -= progptr.data[0];
- 	            
-            	if (VEB) writeln("SUBC ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.SUBR):
-            	REGISTERS[REGISTERS[progptr.data[1]]] -= progptr.data[0];
- 	            
-            	if (VEB) writeln("SUBR ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.MUL):
-            	REGISTERS[progptr.data[1]] *= REGISTERS[progptr.data[0]];
- 	            
-            	if (VEB) writeln("MUL ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.MULC):
-            	REGISTERS[progptr.data[1]] *= progptr.data[0];
- 	            
-            	if (VEB) writeln("MULC ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.MULR):
-            	REGISTERS[REGISTERS[progptr.data[1]]] *= progptr.data[0];
- 	            
-            	if (VEB) writeln("MULR ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.DIV):
-            	REGISTERS[progptr.data[1]] /= REGISTERS[progptr.data[0]];
- 	            
-            	if (VEB) writeln("DIV ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.DIVC):
-            	REGISTERS[progptr.data[1]] /= progptr.data[0];
- 	            
-            	if (VEB) writeln("DIVC ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.DIVR):
-            	REGISTERS[REGISTERS[progptr.data[1]]] /= progptr.data[0];
- 	            
-            	if (VEB) writeln("DIVR ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.JMP):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            
-            	progptr = progstart+(REGISTERS[progptr.data[0]])-1;
-            	if (VEB) writeln("JMP ", (progptr.data[0]));
-            	break;
+
+            case(OpCode.MOV):	REGISTERS[progptr.data[1]] = REGISTERS[progptr.data[0]]; 	break;
+            case(OpCode.MOVC):	REGISTERS[progptr.data[1]] = progptr.data[0]; 				break;
+			case(OpCode.MOVR):	REGISTERS[REGISTERS[progptr.data[1]]] = progptr.data[0]; 	break;
+
+            case(OpCode.ADD):	REGISTERS[progptr.data[1]] += REGISTERS[progptr.data[0]]; 	break;
+            case(OpCode.ADDC):	REGISTERS[progptr.data[1]] += progptr.data[0]; 				break;
+            case(OpCode.ADDR):	REGISTERS[REGISTERS[progptr.data[1]]] += progptr.data[0]; 	break;
+
+            case(OpCode.SUB):	REGISTERS[progptr.data[1]] -= REGISTERS[progptr.data[0]]; 	break;
+            case(OpCode.SUBC):	REGISTERS[progptr.data[1]] -= progptr.data[0]; 				break;
+            case(OpCode.SUBR):	REGISTERS[REGISTERS[progptr.data[1]]] -= progptr.data[0]; 	break;
+
+            case(OpCode.MUL): 	REGISTERS[progptr.data[1]] *= REGISTERS[progptr.data[0]]; 	break;
+            case(OpCode.MULC): 	REGISTERS[progptr.data[1]] *= progptr.data[0]; 				break;
+            case(OpCode.MULR): 	REGISTERS[REGISTERS[progptr.data[1]]] *= progptr.data[0]; 	break;
+
+            case(OpCode.DIV): 	REGISTERS[progptr.data[1]] /= REGISTERS[progptr.data[0]]; 	break;
+            case(OpCode.DIVC): 	REGISTERS[progptr.data[1]] /= progptr.data[0]; 				break;
+            case(OpCode.DIVR): 	REGISTERS[REGISTERS[progptr.data[1]]] /= progptr.data[0]; 	break;
+
+            case(OpCode.JMP):	progptr = progstart+(REGISTERS[progptr.data[0]])-1;			break;
+
             case(OpCode.JMPEQ):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
-
- 	            if (*STATUS_REG == REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
+				if (*STATUS_REG == REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
             	break;
+
             case(OpCode.JMPNEQ):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
  	            if (*STATUS_REG != REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPNEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
             	break;
-            case(OpCode.JMPLEQ):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG >= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPLEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
-            	break;
-            case(OpCode.JMPSEQ):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            if (*STATUS_REG <= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPSEQ ", (progptr.data[0]), " ", REGISTERS[progptr.data[1]]);
-            	break;
-            case(OpCode.JMPC):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
- 	            
-            	progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPC ", progstart+(progptr.data[0]));
-            	break;
-            case(OpCode.JMPEQC):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
 
+            case(OpCode.JMPLEQ):
+ 	            if (*STATUS_REG >= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+            	break;
+
+            case(OpCode.JMPSEQ):
+ 	            if (*STATUS_REG <= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+            	break;
+
+            case(OpCode.JMPC):	progptr = progstart+(progptr.data[0])-1;					break;
+
+            case(OpCode.JMPEQC):
  	            if (*STATUS_REG == progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPEQC ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
+
             case(OpCode.JMPNEQC):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
  	            if (*STATUS_REG != progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPNEQC ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
+
             case(OpCode.JMPLEQC):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
  	            if (*STATUS_REG >= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPLEQC ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
+
             case(OpCode.JMPSEQC):
-            	if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
  	            if (*STATUS_REG <= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	if (VEB) writeln("JMPSEQC ", (progptr.data[0]), " ", progptr.data[1]);
             	break;
+
 			case(OpCode.DBG):
             	if (progptr.data[0] == DBGOpCode.PRT_REG) writeln("REG_", progptr.data[1], "=", REGISTERS[progptr.data[1]]);
             	if (progptr.data[0] == DBGOpCode.PRT_CTR) writeln("PROG_CTR=", progptr);
@@ -392,60 +404,60 @@ class CPU {
 				if (progptr.data[0] == DBGOpCode.SET_VEB) VEB = cast(bool)progptr.data[1];
 				if (progptr.data[0] == DBGOpCode.SET_VSTK) SVEB = cast(bool)progptr.data[1];
             	break;
+
             case(OpCode.CALL):
 				if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
 				callstack.push(progctr+1);
-            	if (VEB) writeln("CALL ", progptr.data[0]);
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	progptr = progstart+(progptr.data[0])-1;
             	break;
+
+            case(OpCode.SCALL):	syscalls[progptr.data[0]].execute();	break;
+
             case(OpCode.RET):
 				size_t tptr = callstack.pop();
             	progptr = progstart+tptr-1;
-            	if (VEB) writeln("RET ", tptr);
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	break;
+
             case(OpCode.PUSHC):
            		datastack.push(progptr.data[0]);
-            	if (VEB) writeln("PUSH ", progptr.data[0]);
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	break;
+
             case(OpCode.PUSH):
            		datastack.push(REGISTERS[progptr.data[0]]);
-            	if (VEB) writeln("PUSHR ", REGISTERS[progptr.data[0]]);
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
             	break;
+
             case(OpCode.POP):
            		REGISTERS[progptr.data[0]] = datastack.pop();
-            	if (VEB) writeln("POP ", progptr.data[0]);
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
 				break;
-            case(OpCode.LDR):
-           		REGISTERS[progptr.data[0]] = memory[progptr.data[1]];
-            	if (VEB) writeln("LD ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-			case(OpCode.LDRC):
-           		REGISTERS[progptr.data[0]] = memory[REGISTERS[progptr.data[1]]];
-            	if (VEB) writeln("LDR ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-            case(OpCode.STR):
-           		*(cast(size_t*)memory[progptr.data[0]]) = progptr.data[1];
-            	if (VEB) writeln("ST ", progptr.data[0], " ", progptr.data[1]);
-            	break;
-			case(OpCode.STRC):
-				*(cast(size_t*)memory[REGISTERS[progptr.data[0]]]) = REGISTERS[progptr.data[1]];
-            	if (VEB) writeln("STR ", progptr.data[0], " ", progptr.data[1]);
-            	break;
+
+            case(OpCode.LDR):	REGISTERS[progptr.data[0]] = memory[progptr.data[1]];				break;
+			case(OpCode.LDRC):	REGISTERS[progptr.data[0]] = memory[REGISTERS[progptr.data[1]]];	break;
+
+            case(OpCode.STR):	*cast(size_t*)(cast(ubyte*)memory+safeMemOffset+REGISTERS[progptr.data[0]]) = REGISTERS[progptr.data[1]];	break;
+			case(OpCode.STRC):	*cast(size_t*)(cast(ubyte*)memory+safeMemOffset+REGISTERS[progptr.data[0]]) = progptr.data[1];				break;
+
             case(OpCode.HALT):
            		writeln("PROGRAM HALTED.");
          		progptr = null;
             	break;
+
             default:
-           		writeln("INVALID OPERATION.");
-            	break;
+				writeln("INVALID OPERATION @", progptr-progstart);
+				break;
         }
 		if (progptr is null) return;
         progptr++;
         cOps++;
     }
+
+	private void debugInstr(Instruction instr) {
+		if (VEB) writeln(to!string((cast(OpCode)instr.opCode)), " ", instr.data[0], " ", instr.data[1]);
+	}
 }
 
 struct Label {
@@ -465,8 +477,13 @@ class Compiler {
 	private Label[] labels;
 	private bool doInfer;
 
+	private SysCall[] syscalls;
+
 	public this(bool infer) {
 		this.doInfer = infer;
+
+		// Add ptrc and rdc syscalls.
+		syscalls = [new SysCallPrtC(), new SysCallReadC()];
 	}
 
 	public ubyte[] compile(string asmCode) {
@@ -504,7 +521,7 @@ class Compiler {
 
 					// Specifies whether the assembler should infer which instruction to use based on how the arguments are structured.
 					if (doInfer) {
-						if (opCode != OpCode.HALT && opCode != OpCode.RET && opCode != OpCode.DBG && opCode != OpCode.CALL) {
+						if (opCode != OpCode.HALT && opCode != OpCode.RET && opCode != OpCode.DBG && opCode != OpCode.CALL && opCode != OpCode.SCALL) {
 							int r = 1;
 							if (kw.toUpper.startsWith("JMP")) {
 								r = 2;
@@ -526,15 +543,17 @@ class Compiler {
 					opCode = getOp(kw);
 
 					string argAStr = "";
-					if (i+1 < keywords.length-1) argAStr = keywords[i+1];
+					if (i+1 < keywords.length) argAStr = keywords[i+1];
 					uint argA = 0;
 
 					string argBStr = "";
-					if (i+2 < keywords.length-1) argBStr = keywords[i+2];
+					if (i+2 < keywords.length) argBStr = keywords[i+2];
 					uint argB = 0;
 					if (opCode != OpCode.HALT && opCode != OpCode.RET) {
 						if (opCode == OpCode.DBG) {
 							argA = getDBGOp(argAStr);
+						} else if (opCode == OpCode.SCALL) {
+							argA = getSyscall(argAStr);
 						} else {
 							argA = getVal(labels, 0, argAStr);
 						}
@@ -542,7 +561,7 @@ class Compiler {
 						// Iterate
 						i++;
 						
-						if (opCode != OpCode.CALL && opCode != OpCode.PUSH && opCode != OpCode.PUSHC && opCode != OpCode.POP && opCode != OpCode.JMP && opCode != OpCode.JMPC) {
+						if (opCode != OpCode.CALL && opCode != OpCode.SCALL && opCode != OpCode.PUSH && opCode != OpCode.PUSHC && opCode != OpCode.POP && opCode != OpCode.JMP && opCode != OpCode.JMPC) {
 							argB = getVal(labels, 1, argBStr);
 
 							// Iterate
@@ -595,6 +614,20 @@ class Compiler {
 	// @ - Reference/Register
 	// TODO: * - Address
 
+	uint getSyscall(string t) {
+		if (t.startsWith("#")) {
+			foreach(i; 0 .. syscalls.length) {
+				if (syscalls[i].name.toLower == t[1..$].toLower) 
+					return cast(uint)i;
+			}
+			throw new Exception("syscall "~t~" not found!");
+		}
+		if (t.startsWith("@")) {
+			return to!uint(t[1..$]);
+		}
+		return to!uint(t);
+	}
+
 	uint getVal(Label[] labels, size_t owner_offset, string t) {
 		if (t.startsWith("#")) {
 			LabelRef r = {t[1..$], owner_offset, code.length};
@@ -626,6 +659,17 @@ class Compiler {
 	}
 }
 
+public string binToASMDESC(ubyte[] data) {
+	Instruction[] instructions = (cast(Instruction*)data)[0..data.length/Instruction.sizeof];
+	string oi = "";
+	int line = 0;
+	foreach(Instruction i; instructions) {
+		oi ~= to!string(line) ~ "\t" ~ to!string(i.opCode) ~ " " ~ to!string(i.data[0]) ~ " " ~ to!string(i.data[1]) ~ "\n";
+		line++;
+	}
+	return oi;
+}
+
 void main(string[] args)
 {
 	version(CPU) {
@@ -642,9 +686,11 @@ void main(string[] args)
 	version (ASM) {
 		bool verbose = false;
 		bool link = false;
+		bool conv = false;
 
 		string linkTmp = "";
 		string firstFile = "";
+		string outFile = "";
 
 		foreach (file; args[1..$]) {
 			if (file.startsWith("-")) {
@@ -654,12 +700,16 @@ void main(string[] args)
 				if (file == "--link" || file == "-l") {
 					link = true;
 				}
+				if (file == "--conv" || file == "-c") {
+					conv = true;
+				}
 			} else {
 				if (firstFile == "") firstFile = file;
 				if (link) {
 					linkTmp ~= "\n"~readText(file);
 				} else {
-					File output = File(file[0..$-3]~"bin", "w");
+					outFile = file[0..$-3]~"bin";
+					File output = File(outFile, "w");
 					auto compiler = new Compiler(true);
 					output.rawWrite(compiler.compile(readText(file)));
 					if (verbose) compiler.printLabels();
@@ -669,18 +719,24 @@ void main(string[] args)
 		}
 
 		if (link) {
-			File output = File(firstFile[0..$-3]~"bin", "w");
+			outFile  = firstFile[0..$-3]~"bin";
+			File output = File(outFile, "w");
 			auto compiler = new Compiler(true);
 			output.rawWrite(compiler.compile(linkTmp));
 			if (verbose) compiler.printLabels();
 			output.close();
 		}
+		
+		if (conv) 
+			writeln(binToASMDESC(cast(ubyte[])read(outFile)));
+
 		if (args.length <= 1) {
 			writeln("Usage
 criscasm (flags) <files>
 Flags
 \t--verbose/-v | verbose mode
-\t--link/-l    | link asm files together (output will be named after the first file)");
+\t--link/-l    | link asm files together (output will be named after the first file)
+\t--conv/-c    | assemble and view human-readable conversion of assembly");
 		}
 	}
 }

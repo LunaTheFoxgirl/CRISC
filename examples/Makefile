@@ -1,6 +1,6 @@
 CC=criscasm
 
-all: branchA factorial stacktest truthmachine
+all: branchA factorial stacktest truthmachine syscall
 
 branchA:
 	$(CC) branchA.asm
@@ -13,6 +13,9 @@ stacktest:
 
 truthmachine:
 	$(CC) truthmachine.asm
+
+syscall:
+	$(CC) syscall.asm
 
 clean:
 	rm *.bin

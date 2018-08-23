@@ -3,10 +3,10 @@ DC=dmd
 all: asm exec cleanbuild
 
 asm:
-	$(DC) crisc.d -of=criscasm -version=ASM
+	$(DC) crisc.d -g -of=criscasm -version=ASM
 
 exec:
-	$(DC) crisc.d -of=criscexec -version=CPU
+	$(DC) crisc.d -g -of=criscexec -version=CPU
 
 install:
 	cp criscasm /bin/criscasm
