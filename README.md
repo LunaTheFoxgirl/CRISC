@@ -13,7 +13,8 @@ To build CRISC, you need to have the DMD compiler installed.
 Run
 ```
 make
-sudo make install```
+sudo make install
+```
 
 To build and install CRISC.
 
