@@ -30,3 +30,4 @@ criscexec
 
 # criscasm output
 *.bin
+bin/
