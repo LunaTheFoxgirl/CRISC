@@ -1,0 +1,8 @@
+{
+	"name": "libcrisc",
+	"license": "BSL-1",
+	"targetType": "dynamicLibrary",
+	"description": "A virtual CPU and assembler library.",
+	"sourcePaths": [],
+	"sourceFiles": ["src/crisc.d"]
+}
