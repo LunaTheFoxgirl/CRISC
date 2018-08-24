@@ -1,42 +1,30 @@
 # CRISC
-Clipsey's Reduced Instruction Set Computing virtual toy processor and assembler.
-
-## What does CRISC do?
+Clipsey's Reduced Instruction Set Computing virtual toy CPU and assembler.
 CRISC is a single-file virtual CPU and assembler for a small toy architecture I made because i was bored.
-
-Please don't make any serious applications with this, (neither can you, really.)
 
 # Building
 
+## Makefile
 To build CRISC, you need to have the DMD compiler installed.
 
-Run
+Then run the following in the CRISC root folder.
 ```
 make
 sudo make install
 ```
 
-To build and install CRISC.
+## DUB Usage
+
+You can add libcrisc as a package on dub to your project if you want to utilize this virtual CPU.
+http://code.dlang.org/packages/libcrisc
 
 # Usage
 
-To assemble an crisc assembly file, use `criscasm`, for running a crisc binary `criscexec`.
+To assemble an crisc assembly file, use `criscasm`.
 
+To run a crisc binary, use `criscexec`.
 
-# Notes
-
-## How do you get addresses from labels?
-To get the address of an label suffix it with #, for example:
-`jmpc #myJumpoint`
-
-## How do you declare variables and create strings?
-You can't yet.
-
-## Conditional execution
-In CRISC, to do conditional execution you first have to move the value you want to test to the status buffer (0xFF)
-then, you can compared values, const values and register values are the current supported options.
-
-## Instruction Set
+# Instruction Set
 
 **DO NOTE** `criscasm` will automatically infer which mode you are going to use. So if you are working with registers, remember to suffix arguments with @ for registers/addresses.
 
