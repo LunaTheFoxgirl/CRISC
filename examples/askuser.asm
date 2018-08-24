@@ -22,16 +22,30 @@ readf:
 	; memory area
 	pop @1
 
+	jmp #i_readfloop
+
+	i_readfbksp:
+		; remove character
+		sub 4 @1
+		jmp #i_readfloop
+
 	i_readfloop:
 		; read key in to status buffer
 		scall #rdc
 		pop @0xFF
 
+		; jump back if character is backspace
+		jmpeq #i_readfbksp 127
+
+		; Print character
+		push @0xFF
+		scall #prtc
+
 		; Store in memory.
 		str @0xFF @1
 
 		; add 4 to count.
-		add 4 @1
+		add 4 @1		
 
 	jmpneq #i_readfloop 10
 

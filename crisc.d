@@ -1,3 +1,4 @@
+module crisc;
 import std.stdio;
 import std.string;
 import std.array;
@@ -214,62 +215,18 @@ class SysCall {
 		this.name = name;
 	}
 
-	this(string name, CPUStack* valueptr) {
+	this(string name, CPU owner) {
 		this.name = name;
-		this.valueptr = valueptr;
+		this.valueptr = &owner.datastack;
 	}
 
-	public CPUStack* valueptr;
+	this(string name, CPUStack* stack) {
+		this.name = name;
+		this.valueptr = stack;
+	}
+
+	protected CPUStack* valueptr;
 	public abstract void execute();
-}
-
-class SysCallPrtC : SysCall {
-
-	this() {
-		super("prtc");
-	}
-
-	this(CPUStack* valueptr) {
-		super("prtc", valueptr);
-	}
-
-	public override void execute() {
-		char c = cast(char)valueptr.pop();
-		write(c);
-	}
-}
-
-import core.sys.posix.termios;
-import core.stdc.stdio;
-import std.utf;
-
-char gch() {
-	char c;
-	termios o;
-	termios n;
-	tcgetattr(0, &o);
-	n = o;
-	n.c_lflag &=(~ICANON);
-	tcsetattr(0,TCSANOW,&n);
-	c = cast(char)getchar();
-	scope(exit) tcsetattr(0,TCSANOW,&o);
-	return c;
-}
-
-class SysCallReadC : SysCall {
-
-	this() {
-		super("rdc");
-	}
-
-	this(CPUStack* valueptr) {
-		super("rdc", valueptr);
-	}
-
-	public override void execute() {
-		char code = gch();
-		valueptr.push(cast(size_t)code);
-	}
 }
 
 class SysCallGetSafeMem : SysCall {
@@ -280,7 +237,7 @@ class SysCallGetSafeMem : SysCall {
 	}
 
 	this(CPU cpu) {
-		super("gsfm", &cpu.datastack);
+		super("gsfm", cpu);
 		this.cpu = cpu;
 	}
 
@@ -365,9 +322,13 @@ class CPU {
 		safeMemOffset = (program.length)+((size_t.sizeof*stackSize)*2);
 
 		// Add ptrc and rdc syscalls.
-		syscalls = [new SysCallPrtC(&datastack), new SysCallReadC(&datastack), new SysCallGetSafeMem(this)];
+		this.syscalls = cast(SysCall[])[new SysCallGetSafeMem(this)];
     }
     
+	public void PushSyscalls(SysCall[] syscalls) {
+		this.syscalls ~= syscalls;
+	}
+
     void runCycle() {
         if (progptr is null) return;
         REGISTERS[254] = cast(size_t)callstack.stackpointer;
@@ -534,11 +495,11 @@ class Compiler {
 
 	private SysCall[] syscalls;
 
-	public this(bool infer) {
+	public this(bool infer, SysCall[] syscalls) {
 		this.doInfer = infer;
 
 		// Add ptrc and rdc syscalls.
-		syscalls = [new SysCallPrtC(), new SysCallReadC(), new SysCallGetSafeMem()];
+		this.syscalls = cast(SysCall[])[new SysCallGetSafeMem()] ~ syscalls;
 	}
 
 	public ubyte[] compile(string asmCode) {
@@ -723,75 +684,4 @@ public string binToASMDESC(ubyte[] data) {
 		line++;
 	}
 	return oi;
-}
-
-void main(string[] args)
-{
-	version(CPU) {
-		auto processor = new CPU(cast(ubyte[])read(args[1]), 32, 512);
-		while (processor.running) {
-			processor.runCycle();   
-		}
-		if (args.length <= 1) {
-			writeln("Usage
-\tcriscexec <file>");
-		}
-	}
-
-	version (ASM) {
-		bool verbose = false;
-		bool link = false;
-		bool conv = false;
-
-		string linkTmp = "";
-		string firstFile = "";
-		string outFile = "";
-
-		foreach (file; args[1..$]) {
-			if (file.startsWith("-")) {
-				if (file == "--verbose" || file == "-v") {
-					verbose = true;
-				}
-				if (file == "--link" || file == "-l") {
-					link = true;
-				}
-				if (file == "--conv" || file == "-c") {
-					conv = true;
-				}
-			} else {
-				if (firstFile == "") firstFile = file;
-				if (link) {
-					linkTmp ~= "\n"~readText(file);
-				} else {
-					outFile = file[0..$-3]~"bin";
-					File output = File(outFile, "w");
-					auto compiler = new Compiler(true);
-					output.rawWrite(compiler.compile(readText(file)));
-					if (verbose) compiler.printLabels();
-					output.close();
-				}
-			}
-		}
-
-		if (link) {
-			outFile  = firstFile[0..$-3]~"bin";
-			File output = File(outFile, "w");
-			auto compiler = new Compiler(true);
-			output.rawWrite(compiler.compile(linkTmp));
-			if (verbose) compiler.printLabels();
-			output.close();
-		}
-		
-		if (conv) 
-			writeln(binToASMDESC(cast(ubyte[])read(outFile)));
-
-		if (args.length <= 1) {
-			writeln("Usage
-criscasm (flags) <files>
-Flags
-\t--verbose/-v | verbose mode
-\t--link/-l    | link asm files together (output will be named after the first file)
-\t--conv/-c    | assemble and view human-readable conversion of assembly");
-		}
-	}
 }
