@@ -1,5 +1,5 @@
 DC=dmd
-LD_LIBRARY_PATH=tmp/
+LD_LIBRARY_PATH=$(F_BIN)
 F_TMP=tmp/
 F_BIN=bin/
 SOURCE=src/
@@ -24,19 +24,19 @@ libcrisc32:
 
 exec:
 	$(DC) -I=$(SOURCE) -c $(SOURCE)criscfe.d $(SOURCE)ncurses.di -g -of=$(F_TMP)criscexec.o -version=CPU
-	$(DC) $(F_TMP)criscexec.o -of=$(F_BIN)criscexec -L-lncurses -L$(F_BIN)libcrisc.so -defaultlib=libphobos2.so -L-rpath=.
+	$(DC) $(F_TMP)criscexec.o -of=$(F_BIN)criscexec -L-lncurses -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so
 
 exec32:
 	$(DC) -I=$(SOURCE) -m32 -c $(SOURCE)criscfe.d $(SOURCE)ncurses.di -g -of=$(F_TMP)criscexec.o -version=CPU
-	$(DC) -m32 $(F_TMP)criscexec.o -of=$(F_BIN)criscexec32 -L-lncurses -L$(F_BIN)libcrisc32.so -defaultlib=libphobos2.so -L-rpath=.
+	$(DC) -m32 $(F_TMP)criscexec.o -of=$(F_BIN)criscexec32 -L-lncurses -L-L\ $(F_BIN) -L-lcrisc32 -defaultlib=libphobos2.so
 
 asm:
 	$(DC) -I=$(SOURCE) -c $(SOURCE)criscfe.d -g -of=$(F_TMP)criscasm.o -version=ASM
-	$(DC) $(F_TMP)criscasm.o -of=$(F_BIN)criscasm -L$(F_BIN)libcrisc.so -defaultlib=libphobos2.so -L-rpath=.
+	$(DC) $(F_TMP)criscasm.o -of=$(F_BIN)criscasm -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so
 
 asm32:
 	$(DC) -I=$(SOURCE) -m32 -c $(SOURCE)criscfe.d -g -of=$(F_TMP)criscasm.o -version=ASM
-	$(DC) -m32 $(F_TMP)criscasm.o -of=$(F_BIN)criscasm32 -L$(F_BIN)libcrisc32.so -defaultlib=libphobos2.so -L-rpath=.
+	$(DC) -m32 $(F_TMP)criscasm.o -of=$(F_BIN)criscasm32 -L-L\ $(F_BIN) -L-lcrisc32 -defaultlib=libphobos2.so
 
 install:
 	cp $(F_BIN)criscasm /bin/criscasm
