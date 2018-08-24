@@ -1,8 +1,9 @@
 {
 	"name": "libcrisc",
+	"targetName": "crisc",
 	"license": "BSL-1",
-	"targetType": "dynamicLibrary",
+	"targetType": "library",
 	"description": "A virtual CPU and assembler library.",
-	"sourcePaths": [],
-	"sourceFiles": ["src/crisc.d"]
+	"sourcePaths": [ "src/" ],
+	"excludedSourceFiles": [ "src/criscfe.d", "src/ncurses.di" ]
 }
