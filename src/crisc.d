@@ -533,15 +533,15 @@ class Compiler {
 		string[] keywords;
 		string[string] definitions;
 
+		bool skip = false;
 		foreach(string line; lines) {
 			string lo = "";
 			bool isComment = false;
 			bool isPreprocessorDirective = false;
-			bool skip = false;
 			foreach (char c; line) {
 				if (c == ';') isComment = true;
 				if (c == '#') isPreprocessorDirective = true;
-				if (!isComment && !isPreprocessorDirective) lo ~= c;
+				if (!isComment && !isPreprocessorDirective && !skip) lo ~= c;
 			}
 			if (isPreprocessorDirective) {
 				string[] directive = line[1..$].split(' ');
@@ -579,7 +579,7 @@ class Compiler {
 				}
 			}
 
-			if (!skip) foreach (string keyword; lo.split) {
+			foreach (string keyword; lo.split) {
 				if (keyword != "") keywords ~= keyword;
 			}
 		}
