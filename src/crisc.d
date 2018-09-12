@@ -545,7 +545,7 @@ class Compiler {
 			}
 			if (isPreprocessorDirective) {
 				string[] directive = line[1..$].split(' ');
-				if (directive.length > 1) {
+				if (directive.length > 0) {
 					if (directive[0] == "define") {
 						definitions[directive[1]] = "";
 						if (directive.length == 3) {
@@ -567,11 +567,15 @@ class Compiler {
 						}
 					}
 
+					if (directive[0] == "undef") {
+						if (directive[1] in definitions) definitions.remove(directive[1]);
+					}
+
 					if (directive[0] == "endif") {
 						skip = false;
 					}
 				} else {
-					throw new Exception("Invalid preprocessor directive\""~directive[0]~"\"! Directive must contain 1 or more tags/datapairs.");
+					throw new Exception("Invalid preprocessor directive \""~directive[0]~"\"! Directive must contain 1 or more tags/datapairs.");
 				}
 			}
 
