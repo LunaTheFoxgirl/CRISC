@@ -20,13 +20,13 @@ http://code.dlang.org/packages/libcrisc
 
 # Usage
 
-To assemble an crisc assembly file, use `criscasm`.
+To assemble an crisc assembly file, use `casm`.
 
 To run a crisc binary, use `criscexec`.
 
 # Instruction Set
 
-**DO NOTE** `criscasm` will automatically infer which mode you are going to use. So if you are working with registers, remember to suffix arguments with @ for registers/addresses.
+**DO NOTE** `casm` will automatically infer which mode you are going to use. So if you are working with registers, remember to suffix arguments with @ for registers/addresses.
 
 **Instruction**|**Input A**|**Input B**|** Description**
 :-----:|:-----:|:-----:|:-----:
