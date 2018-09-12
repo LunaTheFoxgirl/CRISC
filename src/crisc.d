@@ -64,83 +64,83 @@ public enum DBGOpCode : uint {
 }
 
 public enum OpCode : ubyte {
-    // Kill program
-    HALT = 0,
-    
-    // Move REG A to REG B
+	// Kill program
+	HALT = 0,
+	
+	// Move REG A to REG B
 	MOV = 1,
-    
-    // Move CONST A to REG B
+	
+	// Move CONST A to REG B
 	MOVC = 2,
-    
-    // Move REG (Referenced by CONST) A to REG B
+	
+	// Move REG (Referenced by CONST) A to REG B
 	MOVR = 3,
-    
-    ADD = 4,
-    
-    // Add CONST A to REG B
-    ADDC = 5,
-    
-    // Add REG (Referenced by CONST) A to REG B
-    ADDR = 6,
-    
-    // Subtract REG A to REG B
-    SUB = 7,
-    
-    // Subtract CONST A to REG B
-    SUBC = 8,
-    
-    // Subtract REG (Referenced by CONST) A to REG B
-    SUBR = 9,
-        
-    // Multiply REG A to REG B
-    MUL = 10,
-    
-    // Multiply CONST A to REG B
-    MULC = 11,
-    
-    // Multiply REG (Referenced by CONST) A to REG B
-    MULR = 12,
-    
-    // Divide REG A to REG B
-    DIV = 13,
-    
-    // Divide CONST A to REG B
-    DIVC = 14,
-    
-    // Divide REG (Referenced by CONST) A to REG B
-    DIVR = 15,
+	
+	ADD = 4,
+	
+	// Add CONST A to REG B
+	ADDC = 5,
+	
+	// Add REG (Referenced by CONST) A to REG B
+	ADDR = 6,
+	
+	// Subtract REG A to REG B
+	SUB = 7,
+	
+	// Subtract CONST A to REG B
+	SUBC = 8,
+	
+	// Subtract REG (Referenced by CONST) A to REG B
+	SUBR = 9,
+		
+	// Multiply REG A to REG B
+	MUL = 10,
+	
+	// Multiply CONST A to REG B
+	MULC = 11,
+	
+	// Multiply REG (Referenced by CONST) A to REG B
+	MULR = 12,
+	
+	// Divide REG A to REG B
+	DIV = 13,
+	
+	// Divide CONST A to REG B
+	DIVC = 14,
+	
+	// Divide REG (Referenced by CONST) A to REG B
+	DIVR = 15,
 
-    // JUMP TO ADDRESS A
+	// JUMP TO ADDRESS A
 	JMP = 16,
 
-    // JUMP TO CONST A
+	// JUMP TO CONST A
 	JMPC = 17,
-    
-    // JUMP TO ADDRESS A IF STATUS register is NOT EQUAL to CONST
+	
+	// JUMP TO ADDRESS A IF STATUS register is NOT EQUAL to CONST
 	JMPNEQ = 18,
-    
-    // JUMP TO ADDRESS A IF STATUS register is EQUAL to CONST
+	
+	// JUMP TO ADDRESS A IF STATUS register is EQUAL to CONST
 	JMPEQ = 19,
-    
-    // JUMP TO ADDRESS A IF STATUS register is EQUAL or LARGER than CONST B
+	
+	// JUMP TO ADDRESS A IF STATUS register is EQUAL or LARGER than CONST B
 	JMPLEQ = 20,
-    
-    // JUMP TO ADDRESS A IF STATUS register is EQUAL or SMALLER than CONST B
-    JMPSEQ = 21,
-    
-    // JUMP TO CONST A IF STATUS register is NOT EQUAL to CONST
+	
+	// JUMP TO ADDRESS A IF STATUS register is EQUAL or SMALLER than CONST B
+	JMPSEQ = 21,
+	
+	// JUMP TO CONST A IF STATUS register is NOT EQUAL to CONST
 	JMPNEQC = 22,
-    
-    // JUMP TO CONST A IF STATUS register is EQUAL to CONST
+	
+	// JUMP TO CONST A IF STATUS register is EQUAL to CONST
 	JMPEQC = 23,
-    
-    // JUMP TO CONST A IF STATUS register is EQUAL or LARGER than CONST B
+	
+	// JUMP TO CONST A IF STATUS register is EQUAL or LARGER than CONST B
 	JMPLEQC = 24,
-    
-    // JUMP TO CONST A IF STATUS register is EQUAL or SMALLER than CONST B
-    JMPSEQC = 25,
-    
+	
+	// JUMP TO CONST A IF STATUS register is EQUAL or SMALLER than CONST B
+	JMPSEQC = 25,
+	
 	// LOAD VALUE to REG A from (Referenced by CONST) MEMORY ADDRESS B
 	LDR = 26,
 
@@ -159,25 +159,25 @@ public enum OpCode : ubyte {
 	// CALL system level function.
 	SCALL = 31,
 	
-    // PUSH value to stack
+	// PUSH value to stack
 	PUSH = 32,
 
-    // PUSH value to stack
+	// PUSH value to stack
 	PUSHC = 33,
 	
 	// POP value from stack
 	POP = 34,
 	
 	// RETURN returns to the last stack pointer with values
-    RET = 35,
+	RET = 35,
 	
 	// DBG debugging functionality
 	DBG = 36
 }
 
 struct Instruction {
-    OpCode opCode;
-    size_t[2] data;
+	OpCode opCode;
+	size_t[2] data;
 }
 
 struct CPUStack {
@@ -272,12 +272,12 @@ class SysCallGetSafeMem : SysCall {
 }
 
 class CPU {
-    // Program counter/program pointer.
-    Instruction* progptr;
+	// Program counter/program pointer.
+	Instruction* progptr;
 
-    // Pointer to start of program
-    Instruction* progstart;
-    
+	// Pointer to start of program
+	Instruction* progstart;
+	
 	size_t progctr() {
 		return progptr-progstart;
 	}
@@ -286,7 +286,7 @@ class CPU {
 	SysCall[] syscalls;
 
 	// Registers
-    ulong[256] REGISTERS;
+	ulong[256] REGISTERS;
 
 	// Pointer to status register (0xFF)
 	ulong* STATUS_REG;
@@ -298,13 +298,13 @@ class CPU {
 	CPUStack datastack;
 
 	// The memory in which the program resides.
-    ubyte[] memory;
+	ubyte[] memory;
 
 	// safe memory space offset
 	size_t safeMemOffset;
 
 	// Amount of operations/instructions program has run
-    ulong cOps = 0;
+	ulong cOps = 0;
 
 	// Sizes for stacks
 	ulong callstackSize;
@@ -313,13 +313,13 @@ class CPU {
 	// Verbose and Stack Verbose
 	bool VEB = false;
 	bool SVEB = false;
-    
-    bool running() {
-        return (progptr !is null);
-    }
+	
+	bool running() {
+		return (progptr !is null);
+	}
    
 
-    this(ubyte[] program, size_t stackSize, size_t memorySize) {
+	this(ubyte[] program, size_t stackSize, size_t memorySize) {
 		// Set up status register pointer.
 		STATUS_REG = &REGISTERS[255];
 		
@@ -348,137 +348,137 @@ class CPU {
 
 		// Add ptrc and rdc syscalls.
 		this.syscalls = cast(SysCall[])[new SysCallGetSafeMem(this)];
-    }
-    
+	}
+	
 	public void PushSyscalls(SysCall[] syscalls) {
 		this.syscalls ~= syscalls;
 	}
 
-    void runCycle() {
-        if (progptr is null) return;
-        REGISTERS[254] = cast(size_t)callstack.stackpointer;
+	void runCycle() {
+		if (progptr is null) return;
+		REGISTERS[254] = cast(size_t)callstack.stackpointer;
 		debugInstr(*progptr);
-        switch (progptr.opCode) {
+		switch (progptr.opCode) {
 
-            case(OpCode.MOV):	REGISTERS[progptr.data[1]] = REGISTERS[progptr.data[0]]; 	break;
-            case(OpCode.MOVC):	REGISTERS[progptr.data[1]] = progptr.data[0]; 				break;
+			case(OpCode.MOV):	REGISTERS[progptr.data[1]] = REGISTERS[progptr.data[0]]; 	break;
+			case(OpCode.MOVC):	REGISTERS[progptr.data[1]] = progptr.data[0]; 				break;
 			case(OpCode.MOVR):	REGISTERS[REGISTERS[progptr.data[1]]] = progptr.data[0]; 	break;
 
-            case(OpCode.ADD):	REGISTERS[progptr.data[1]] += REGISTERS[progptr.data[0]]; 	break;
-            case(OpCode.ADDC):	REGISTERS[progptr.data[1]] += progptr.data[0]; 				break;
-            case(OpCode.ADDR):	REGISTERS[REGISTERS[progptr.data[1]]] += progptr.data[0]; 	break;
+			case(OpCode.ADD):	REGISTERS[progptr.data[1]] += REGISTERS[progptr.data[0]]; 	break;
+			case(OpCode.ADDC):	REGISTERS[progptr.data[1]] += progptr.data[0]; 				break;
+			case(OpCode.ADDR):	REGISTERS[REGISTERS[progptr.data[1]]] += progptr.data[0]; 	break;
 
-            case(OpCode.SUB):	REGISTERS[progptr.data[1]] -= REGISTERS[progptr.data[0]]; 	break;
-            case(OpCode.SUBC):	REGISTERS[progptr.data[1]] -= progptr.data[0]; 				break;
-            case(OpCode.SUBR):	REGISTERS[REGISTERS[progptr.data[1]]] -= progptr.data[0]; 	break;
+			case(OpCode.SUB):	REGISTERS[progptr.data[1]] -= REGISTERS[progptr.data[0]]; 	break;
+			case(OpCode.SUBC):	REGISTERS[progptr.data[1]] -= progptr.data[0]; 				break;
+			case(OpCode.SUBR):	REGISTERS[REGISTERS[progptr.data[1]]] -= progptr.data[0]; 	break;
 
-            case(OpCode.MUL): 	REGISTERS[progptr.data[1]] *= REGISTERS[progptr.data[0]]; 	break;
-            case(OpCode.MULC): 	REGISTERS[progptr.data[1]] *= progptr.data[0]; 				break;
-            case(OpCode.MULR): 	REGISTERS[REGISTERS[progptr.data[1]]] *= progptr.data[0]; 	break;
+			case(OpCode.MUL): 	REGISTERS[progptr.data[1]] *= REGISTERS[progptr.data[0]]; 	break;
+			case(OpCode.MULC): 	REGISTERS[progptr.data[1]] *= progptr.data[0]; 				break;
+			case(OpCode.MULR): 	REGISTERS[REGISTERS[progptr.data[1]]] *= progptr.data[0]; 	break;
 
-            case(OpCode.DIV): 	REGISTERS[progptr.data[1]] /= REGISTERS[progptr.data[0]]; 	break;
-            case(OpCode.DIVC): 	REGISTERS[progptr.data[1]] /= progptr.data[0]; 				break;
-            case(OpCode.DIVR): 	REGISTERS[REGISTERS[progptr.data[1]]] /= progptr.data[0]; 	break;
+			case(OpCode.DIV): 	REGISTERS[progptr.data[1]] /= REGISTERS[progptr.data[0]]; 	break;
+			case(OpCode.DIVC): 	REGISTERS[progptr.data[1]] /= progptr.data[0]; 				break;
+			case(OpCode.DIVR): 	REGISTERS[REGISTERS[progptr.data[1]]] /= progptr.data[0]; 	break;
 
-            case(OpCode.JMP):	progptr = progstart+(REGISTERS[progptr.data[0]])-1;			break;
+			case(OpCode.JMP):	progptr = progstart+(REGISTERS[progptr.data[0]])-1;			break;
 
-            case(OpCode.JMPEQ):
+			case(OpCode.JMPEQ):
 				if (*STATUS_REG == REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+				break;
 
-            case(OpCode.JMPNEQ):
- 	            if (*STATUS_REG != REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+			case(OpCode.JMPNEQ):
+ 				if (*STATUS_REG != REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+				break;
 
-            case(OpCode.JMPLEQ):
- 	            if (*STATUS_REG >= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+			case(OpCode.JMPLEQ):
+ 				if (*STATUS_REG >= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+				break;
 
-            case(OpCode.JMPSEQ):
- 	            if (*STATUS_REG <= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+			case(OpCode.JMPSEQ):
+ 				if (*STATUS_REG <= REGISTERS[progptr.data[1]]) progptr = progstart+(progptr.data[0])-1;
+				break;
 
-            case(OpCode.JMPC):	progptr = progstart+(progptr.data[0])-1;					break;
+			case(OpCode.JMPC):	progptr = progstart+(progptr.data[0])-1;					break;
 
-            case(OpCode.JMPEQC):
- 	            if (*STATUS_REG == progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+			case(OpCode.JMPEQC):
+ 				if (*STATUS_REG == progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+				break;
 
-            case(OpCode.JMPNEQC):
- 	            if (*STATUS_REG != progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+			case(OpCode.JMPNEQC):
+ 				if (*STATUS_REG != progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+				break;
 
-            case(OpCode.JMPLEQC):
- 	            if (*STATUS_REG >= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+			case(OpCode.JMPLEQC):
+ 				if (*STATUS_REG >= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+				break;
 
-            case(OpCode.JMPSEQC):
- 	            if (*STATUS_REG <= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
-            	break;
+			case(OpCode.JMPSEQC):
+ 				if (*STATUS_REG <= progptr.data[1]) progptr = progstart+(progptr.data[0])-1;
+				break;
 
 			case(OpCode.DBG):
-            	if (progptr.data[0] == DBGOpCode.PRT_REG) writeln("REG_", progptr.data[1], "=", REGISTERS[progptr.data[1]]);
-            	if (progptr.data[0] == DBGOpCode.PRT_CTR) writeln("PROG_CTR=", progptr);
-            	if (progptr.data[0] == DBGOpCode.PRT_CYC) writeln("CYCLES=", cOps);
-            	if (progptr.data[0] == DBGOpCode.PRT_WMEM) writeln("MEMORY MAP=", to!string(memory));
-            	if (progptr.data[0] == DBGOpCode.PRT_DSTK) writeln("DATASTACK=", datastack.stackStr);
-            	if (progptr.data[0] == DBGOpCode.PRT_CSTK) writeln("CALLSTACK=", callstack.stackStr);
+				if (progptr.data[0] == DBGOpCode.PRT_REG) writeln("REG_", progptr.data[1], "=", REGISTERS[progptr.data[1]]);
+				if (progptr.data[0] == DBGOpCode.PRT_CTR) writeln("PROG_CTR=", progptr);
+				if (progptr.data[0] == DBGOpCode.PRT_CYC) writeln("CYCLES=", cOps);
+				if (progptr.data[0] == DBGOpCode.PRT_WMEM) writeln("MEMORY MAP=", to!string(memory));
+				if (progptr.data[0] == DBGOpCode.PRT_DSTK) writeln("DATASTACK=", datastack.stackStr);
+				if (progptr.data[0] == DBGOpCode.PRT_CSTK) writeln("CALLSTACK=", callstack.stackStr);
 				if (progptr.data[0] == DBGOpCode.PRT_MEMR) writeln(to!string(readMemRange(REGISTERS[253], progptr.data[1])));
 
 
 				if (progptr.data[0] == DBGOpCode.SET_VEB) VEB = cast(bool)progptr.data[1];
 				if (progptr.data[0] == DBGOpCode.SET_VSTK) SVEB = cast(bool)progptr.data[1];
-            	break;
+				break;
 
-            case(OpCode.CALL):
+			case(OpCode.CALL):
 				if (progptr.data[0] < 0) throw new Exception("CPU HALT; ACCESS OUT OF BOUNDS");
 				callstack.push(progctr+1);
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
-            	progptr = progstart+(progptr.data[0])-1;
-            	break;
+				progptr = progstart+(progptr.data[0])-1;
+				break;
 
-            case(OpCode.SCALL):	syscalls[progptr.data[0]].execute();	break;
+			case(OpCode.SCALL):	syscalls[progptr.data[0]].execute();	break;
 
-            case(OpCode.RET):
+			case(OpCode.RET):
 				size_t tptr = callstack.pop();
-            	progptr = progstart+tptr-1;
-				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
-            	break;
-
-            case(OpCode.PUSHC):
-           		datastack.push(progptr.data[0]);
-				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
-            	break;
-
-            case(OpCode.PUSH):
-           		datastack.push(REGISTERS[progptr.data[0]]);
-				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
-            	break;
-
-            case(OpCode.POP):
-           		REGISTERS[progptr.data[0]] = datastack.pop();
+				progptr = progstart+tptr-1;
 				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
 				break;
 
-            case(OpCode.LDR):	REGISTERS[progptr.data[1]] = readMem(REGISTERS[progptr.data[0]]);			break;
+			case(OpCode.PUSHC):
+		   		datastack.push(progptr.data[0]);
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
+				break;
+
+			case(OpCode.PUSH):
+		   		datastack.push(REGISTERS[progptr.data[0]]);
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
+				break;
+
+			case(OpCode.POP):
+		   		REGISTERS[progptr.data[0]] = datastack.pop();
+				if (SVEB) writeln("DATASTACK=", datastack.stackStr);
+				break;
+
+			case(OpCode.LDR):	REGISTERS[progptr.data[1]] = readMem(REGISTERS[progptr.data[0]]);			break;
 			case(OpCode.LDRC):	REGISTERS[progptr.data[1]] = readMem(progptr.data[0]);	break;
 
-            case(OpCode.STR):	writeMem(REGISTERS[progptr.data[1]], REGISTERS[progptr.data[0]]);				break;
+			case(OpCode.STR):	writeMem(REGISTERS[progptr.data[1]], REGISTERS[progptr.data[0]]);				break;
 			case(OpCode.STRC):	writeMem(REGISTERS[progptr.data[1]], progptr.data[0]);							break;
 
-            case(OpCode.HALT):
-           		writeln("PROGRAM HALTED.");
-         		progptr = null;
-            	break;
+			case(OpCode.HALT):
+		   		writeln("PROGRAM HALTED.");
+		 		progptr = null;
+				break;
 
-            default:
+			default:
 				writeln("INVALID OPERATION @", progptr-progstart);
 				break;
-        }
+		}
 		if (progptr is null) return;
-        progptr++;
-        cOps++;
-    }
+		progptr++;
+		cOps++;
+	}
 
 	private size_t readMem(size_t address) {
 		size_t value = *cast(size_t*)(cast(ubyte*)memory+address);
@@ -531,14 +531,51 @@ class Compiler {
 		// Process lines in program, removing/ignoring comments.
 		string[] lines = asmCode.split('\n');
 		string[] keywords;
+		string[string] definitions;
+
 		foreach(string line; lines) {
 			string lo = "";
 			bool isComment = false;
+			bool isPreprocessorDirective = false;
+			bool skip = false;
 			foreach (char c; line) {
 				if (c == ';') isComment = true;
-				if (!isComment) lo ~= c;
+				if (c == '#') isPreprocessorDirective = true;
+				if (!isComment && !isPreprocessorDirective) lo ~= c;
 			}
-			foreach (string keyword; lo.split) {
+			if (isPreprocessorDirective) {
+				string[] directive = line[1..$].split(' ');
+				if (directive.length > 1) {
+					if (directive[0] == "define") {
+						definitions[directive[1]] = "";
+						if (directive.length == 3) {
+							definitions[directive[1]] = directive[2];
+						}
+					}
+
+					if (directive[0] == "ifdef") {
+						skip = true;
+						if (directive[1] in definitions) {
+							skip = false;
+						}
+					}
+
+					if (directive[0] == "ifndef") {
+						skip = true;
+						if (directive[1] !in definitions) {
+							skip = false;
+						}
+					}
+
+					if (directive[0] == "endif") {
+						skip = false;
+					}
+				} else {
+					throw new Exception("Invalid preprocessor directive\""~directive[0]~"\"! Directive must contain 1 or more tags/datapairs.");
+				}
+			}
+
+			if (!skip) foreach (string keyword; lo.split) {
 				if (keyword != "") keywords ~= keyword;
 			}
 		}
@@ -591,6 +628,7 @@ class Compiler {
 					if (i+2 < keywords.length) argBStr = keywords[i+2];
 					uint argB = 0;
 					if (opCode != OpCode.HALT && opCode != OpCode.RET) {
+						argAStr = getValMacro(definitions, argAStr);
 						if (opCode == OpCode.DBG) {
 							argA = getDBGOp(argAStr);
 						} else if (opCode == OpCode.SCALL) {
@@ -601,6 +639,7 @@ class Compiler {
 
 						// Iterate
 						i++;
+						argBStr = getValMacro(definitions, argBStr);
 						
 						if (opCode != OpCode.CALL && opCode != OpCode.SCALL && opCode != OpCode.PUSH && opCode != OpCode.PUSHC && opCode != OpCode.POP && opCode != OpCode.JMP && opCode != OpCode.JMPC) {
 							argB = getVal(labels, 1, argBStr);
@@ -642,6 +681,14 @@ class Compiler {
 		}
 
 		return cast(ubyte[])code;
+	}
+
+	string getValMacro(string[string] macros, string name, bool throwExceptionOnFailure = false) {
+		if (name in macros) {
+			return macros[name];
+		}
+		if (throwExceptionOnFailure) throw new Exception("Macro defintion not found in macro definitions!");
+		return name;
 	}
 
 	uint getValLabels(Label[] labels, string label) {

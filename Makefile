@@ -32,25 +32,37 @@ exec32:
 
 asm:
 	$(DC) -I=$(SOURCE) -c $(SOURCE)criscfe.d -g -of=$(F_TMP)criscasm.o -version=ASM
-	$(DC) $(F_TMP)criscasm.o -of=$(F_BIN)criscasm -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so
+	$(DC) $(F_TMP)criscasm.o -of=$(F_BIN)casm -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so
 
 asm32:
 	$(DC) -I=$(SOURCE) -m32 -c $(SOURCE)criscfe.d -g -of=$(F_TMP)criscasm.o -version=ASM
-	$(DC) -m32 $(F_TMP)criscasm.o -of=$(F_BIN)criscasm32 -L-L\ $(F_BIN) -L-lcrisc32 -defaultlib=libphobos2.so
+	$(DC) -m32 $(F_TMP)criscasm.o -of=$(F_BIN)casm32 -L-L\ $(F_BIN) -L-lcrisc32 -defaultlib=libphobos2.so
 
 install:
-	cp $(F_BIN)criscasm /bin/criscasm
+	cp $(F_BIN)casm /bin/casm
 	cp $(F_BIN)criscexec /bin/criscexec
 	cp $(F_BIN)libcrisc.so /lib64/libcrisc.so
 
 install32:
-	cp $(F_BIN)criscasm /bin/criscasm32
-	cp $(F_BIN)criscexec /bin/criscexec32
-	cp $(F_BIN)libcrisc.so /lib/libcrisc.so
+	cp $(F_BIN)casm32 /bin/casm32
+	cp $(F_BIN)criscexec32 /bin/criscexec32
+	cp $(F_BIN)libcrisc32.so /lib/libcrisc32.so
 
 cleanbuild:
 	rm -r $(F_TMP)
 
 clean:
 	rm -r $(F_BIN)
+
+uninstall:
+	rm /bin/casm
+	rm /bin/criscasm
+	rm /bin/criscexec
+	rm /lib64/libcrisc.so
+
+uninstall32:
+	rm /bin/casm32
+	rm /bin/criscasm32
+	rm /bin/criscexec32
+	rm /lib/libcrisc32.so
 
