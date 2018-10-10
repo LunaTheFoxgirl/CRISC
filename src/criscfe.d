@@ -64,56 +64,8 @@ class SysCallPrtC : SysCall {
 	public override void execute() {
 		version(CPU) {
 			char c = cast(char)valueptr.pop();
-			import ncurses;
-			switch(c) {
-				case(127):
-					int x;
-					int y;
-					int w;
-					int h;
-					getyx(stdscr, &x, &y);
-					getmaxyx(stdscr, &w, &h);
-					
-					x--;
-					if ( x < 0 ) {
-						x = w-1;
-						y--;
-					}
-					if ( y < 0 ) {
-						y = 0;
-						x = 0;
-					}
-					mvdelch(y, x);
-				break;
-				default:		printw([c, '\0'].ptr);		break;
-			}
-			refresh();
-		}
-	}
-}
-
-class SysCallReadC : SysCall {
-
-	this() {
-		super("rdc");
-	}
-
-	this(CPU valueptr) {
-		super("rdc", valueptr);
-		version(CPU) {
-			import ncurses;
-			initscr();
-			noecho();
-			//keypad(stdscr, true);
-			//raw();
-		}
-	}
-
-	public override void execute() {
-		version(CPU) {
-			import ncurses;
-			char code = cast(char)getch();
-			valueptr.push(cast(size_t)code);
+			import std.stdio;
+			write(c);
 		}
 	}
 }
@@ -133,8 +85,7 @@ void main(string[] args)
 		}
 		auto processor = new CPU(cast(ubyte[])read(args[1]), 32, 512);
 		processor.PushSyscalls([
-			new SysCallPrtC(processor), 
-			new SysCallReadC(processor)]
+			new SysCallPrtC(processor)]
 		);
 		while (processor.running) {
 			processor.runCycle();   
@@ -174,7 +125,7 @@ void main(string[] args)
 				} else {
 					outFile = file[0..$-3]~"bin";
 					File output = File(outFile, "w");
-					auto compiler = new Compiler(true, [new SysCallPrtC(), new SysCallReadC()]);
+					auto compiler = new Compiler(true, [new SysCallPrtC()]);
 					output.rawWrite(compiler.compile(readText(file)));
 					if (verbose) compiler.printLabels();
 					output.close();
@@ -185,7 +136,7 @@ void main(string[] args)
 		if (link) {
 			outFile  = firstFile[0..$-3]~"bin";
 			File output = File(outFile, "w");
-			auto compiler = new Compiler(true, [new SysCallPrtC(), new SysCallReadC()]);
+			auto compiler = new Compiler(true, [new SysCallPrtC()]);
 			output.rawWrite(compiler.compile(linkTmp));
 			if (verbose) compiler.printLabels();
 			output.close();

@@ -538,9 +538,9 @@ class Compiler {
 			string lo = "";
 			bool isComment = false;
 			bool isPreprocessorDirective = false;
-			foreach (char c; line) {
+			foreach (int i, char c; line) {
 				if (c == ';') isComment = true;
-				if (c == '#') isPreprocessorDirective = true;
+				if (i == 0 && c == '#') isPreprocessorDirective = true;
 				if (!isComment && !isPreprocessorDirective && !skip) lo ~= c;
 			}
 			if (isPreprocessorDirective) {
@@ -580,7 +580,8 @@ class Compiler {
 			}
 
 			foreach (string keyword; lo.split) {
-				if (keyword != "") keywords ~= keyword;
+				if (keyword in definitions) keywords ~= definitions[keyword];
+				else if (keyword != "") keywords ~= keyword;
 			}
 		}
 		

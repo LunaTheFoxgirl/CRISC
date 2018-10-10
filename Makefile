@@ -24,7 +24,7 @@ libcrisc32:
 
 exec:
 	$(DC) -I=$(SOURCE) -c $(SOURCE)criscfe.d $(SOURCE)ncurses.di -g -of=$(F_TMP)criscexec.o -version=CPU
-	$(DC) $(F_TMP)criscexec.o -of=$(F_BIN)criscexec -L-lncurses -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so
+	$(DC) $(F_TMP)criscexec.o -of=$(F_BIN)criscexec -L-lncurses -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so -L-Lbin/
 
 exec32:
 	$(DC) -I=$(SOURCE) -m32 -c $(SOURCE)criscfe.d $(SOURCE)ncurses.di -g -of=$(F_TMP)criscexec.o -version=CPU
@@ -32,7 +32,7 @@ exec32:
 
 asm:
 	$(DC) -I=$(SOURCE) -c $(SOURCE)criscfe.d -g -of=$(F_TMP)criscasm.o -version=ASM
-	$(DC) $(F_TMP)criscasm.o -of=$(F_BIN)casm -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so
+	$(DC) $(F_TMP)criscasm.o -of=$(F_BIN)casm -L-L\ $(F_BIN) -L-lcrisc -defaultlib=libphobos2.so -L-Lbin/ 
 
 asm32:
 	$(DC) -I=$(SOURCE) -m32 -c $(SOURCE)criscfe.d -g -of=$(F_TMP)criscasm.o -version=ASM
